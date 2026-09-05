@@ -27,6 +27,7 @@ export {
   ONLINE_AMT_CHUNK_SIZE,
   ONLINE_AMT_SAMPLE_RATE,
 } from "./runtime/onlineAmtProtocol.js";
+export { OnlineAmtSession } from "./runtime/onlineAmtSession.js";
 
 export type {
   ChordMatcherDecision,
@@ -46,6 +47,11 @@ export type {
   ListenMatcherThresholds,
 } from "./core/listenMatcherProfiles.js";
 export type { DecodedOnlineAmtOutput } from "./core/onlineAmtOutput.js";
+export type {
+  OnlineAmtSessionOptions,
+  OnlineAmtStepResult,
+  WasmGraphOptimizationLevel,
+} from "./runtime/onlineAmtSession.js";
 export type {
   ListenInputSource,
   NoteRecognizer,

@@ -70,6 +70,20 @@ The graph consumes one mono `[1, 512]` float32 audio chunk at 16 kHz plus its
 explicit recurrent state. `onnxruntime-web` 1.27.0 is an exact runtime dependency,
 not a transitive viewer implementation detail.
 
+`OnlineAmtSession` owns the eight recurrent tensors in their frozen order:
+`audio_buffer`, `mel_buffer`, `cnn_cache_1`, `cnn_cache_2`, `lstm_h`, `lstm_c`,
+`previous_output`, and `silence_count`. Its defaults remain one WASM thread,
+full graph optimization, CPU arena and memory-pattern allocation enabled, and
+sequential execution. Browser callers pass `modelUrl`; offline callers may pass
+`modelData` and `wasmBinary` so inference needs no HTTP server or filesystem
+dependency in production code.
+
+The deterministic 180-frame fixture under
+`evals/fixtures/online_amt_runtime` verifies score parity within `2e-4`, exact
+decoded states, exact signal-active results, reset behavior, and faster-than-
+audio-cadence sequential execution. Model reproduction and native validation
+instructions are in `tools/online_amt/README.md`.
+
 ## Browser assumptions
 
 The browser integration targets modern secure-context browsers/webviews with ES

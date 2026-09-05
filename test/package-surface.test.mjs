@@ -15,6 +15,7 @@ test("keeps production, browser, and evaluation exports separate", () => {
     "LISTEN_MATCHER_PROFILES",
     "ONLINE_AMT_CHUNK_SIZE",
     "ONLINE_AMT_SAMPLE_RATE",
+    "OnlineAmtSession",
     "OnlineAmtOutputDecoder",
     "decodeOnlineAmtOutput",
     "matcherOptionsForListenMatcherProfile",

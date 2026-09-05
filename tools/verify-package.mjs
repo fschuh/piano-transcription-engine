@@ -16,6 +16,8 @@ const requiredPackageFiles = [
   "dist/core/recognitionTypes.d.ts",
   "dist/runtime/onlineAmtProtocol.js",
   "dist/runtime/onlineAmtProtocol.d.ts",
+  "dist/runtime/onlineAmtSession.js",
+  "dist/runtime/onlineAmtSession.d.ts",
   "dist/browser/index.js",
   "dist/browser/index.d.ts",
   "dist/eval/index.js",
@@ -55,6 +57,18 @@ if (privateCorpusFiles.length > 0) {
   throw new Error(
     "Private recording/MIDI formats are not allowed in this repository: " +
     privateCorpusFiles.map((path) => relative(repositoryRoot, path)).join(", "),
+  );
+}
+
+const modelFiles = repositoryFiles
+  .filter((path) => extname(path).toLowerCase() === ".onnx")
+  .map((path) => relative(repositoryRoot, path));
+if (
+  modelFiles.length !== 1 ||
+  modelFiles[0] !== "assets/models/online_amt_streaming.onnx"
+) {
+  throw new Error(
+    "Expected exactly one canonical ONNX model, found: " + modelFiles.join(", "),
   );
 }
 

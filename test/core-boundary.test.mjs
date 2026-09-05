@@ -52,3 +52,23 @@ test("canonical engine-core fixture bytes match the Task 01 baseline", async () 
     "566453d6d14949768a5d1506580f0709cb39ac61c1147819c203c2429039df15",
   );
 });
+
+test("canonical runtime fixture bytes match the Task 01 baseline", async () => {
+  const expectedHashes = {
+    "audio.f32": "33c32d4cb06fa3eef9c1fa81d84213a33227120cc94cec8c274e575e315fa33c",
+    "metadata.json": "b3c048309207d9936cdffce6aa3d1974e61087f4906918923e95f3f1651c7bf6",
+    "scores.f32": "b1a148b928e632f3871f59f76390a251fd78f7a20fe4711e5a816615f6922006",
+    "signal-active.u8": "59278ecd80902c8e0f8efaf1aa8f4bb09aed7d3dfbc14309e17528466cbdd1d2",
+    "states.u8": "507c9d05c9e2b2c0b58de23d9721ee27511549beacae59b5089da3742d5a4617",
+  };
+  for (const [name, expectedHash] of Object.entries(expectedHashes)) {
+    const fixture = await readFile(join(
+      repositoryRoot,
+      "evals",
+      "fixtures",
+      "online_amt_runtime",
+      name,
+    ));
+    assert.equal(createHash("sha256").update(fixture).digest("hex"), expectedHash, name);
+  }
+});
