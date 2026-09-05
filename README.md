@@ -8,9 +8,9 @@ published to npm (`private: true`).
 The production entry point exposes the platform-neutral recognition contracts,
 online-AMT output decoder, exact-chord matcher, matcher diagnostics, immutable
 profile registry, and 16 kHz/512-sample protocol constants. The browser entry
-point remains intentionally empty until Task 05 moves the browser recognizer;
-the evaluation entry currently exposes only non-decoding file inventory, which
-Task 07 will extend with corpus validation.
+point exposes the injected `BrowserOnlineAmtRecognizer`; the evaluation entry
+currently exposes only non-decoding file inventory, which Task 07 will extend
+with corpus validation.
 
 ## Commands
 
@@ -95,6 +95,24 @@ isolation and `SharedArrayBuffer` are not required.
 The consuming application supplies asset URLs and creates its own module worker.
 The package must not assume `document.baseURI`, a Vite source layout, microphone
 permission wording, or any sheet-music-viewer path.
+
+```ts
+import { BrowserOnlineAmtRecognizer } from "@fschuh/piano-transcription-engine/browser";
+
+const recognizer = new BrowserOnlineAmtRecognizer({
+  modelUrl: "/generated-listen-assets/online_amt_streaming.onnx",
+  workletUrl: "/generated-listen-assets/online-amt-capture.js",
+  createWorker: () => new Worker(
+    new URL("./onlineAmtWorker.ts", import.meta.url),
+    { type: "module", name: "online-amt-inference" },
+  ),
+});
+```
+
+The worker entry remains consumer-owned so its bundler can compile it normally.
+The recognizer requests one input channel with echo cancellation, noise
+suppression, and automatic gain control disabled, then captures 512-sample
+chunks from a 16 kHz `AudioContext` without persisting or transmitting audio.
 
 ## Data boundary
 

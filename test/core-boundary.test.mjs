@@ -72,3 +72,26 @@ test("canonical runtime fixture bytes match the Task 01 baseline", async () => {
     assert.equal(createHash("sha256").update(fixture).digest("hex"), expectedHash, name);
   }
 });
+
+test("browser recognizer contains no viewer asset or worker construction assumptions", async () => {
+  const source = await readFile(join(
+    repositoryRoot,
+    "src",
+    "browser",
+    "browserOnlineAmtRecognizer.ts",
+  ), "utf8");
+  for (const forbidden of [
+    "document.baseURI",
+    "onlineAmtWorker.ts",
+    "models/online_amt_streaming.onnx",
+    "worklets/online-amt-capture.js",
+    "new Worker(",
+    "sheet-music-viewer",
+    "webapp/src",
+  ]) {
+    assert.equal(source.includes(forbidden), false, forbidden);
+  }
+  assert.match(source, /modelUrl: this\.options\.modelUrl/);
+  assert.match(source, /addModule\(this\.options\.workletUrl\)/);
+  assert.match(source, /this\.options\.createWorker\(\)/);
+});

@@ -22,7 +22,10 @@ test("keeps production, browser, and evaluation exports separate", () => {
   ]) {
     assert.ok(name in production, `missing production export ${name}`);
   }
-  assert.deepEqual(Object.keys(browser), []);
+  assert.equal(typeof browser.BrowserOnlineAmtRecognizer, "function");
+  assert.equal(browser.ONLINE_AMT_WASM_THREADS, 1);
+  assert.equal("BrowserOnlineAmtRecognizer" in production, false);
+  assert.equal("OnlineAmtSession" in browser, false);
   assert.equal("inventoryRecordingFiles" in production, false);
   assert.equal("inventoryRecordingFiles" in browser, false);
   assert.equal(typeof inventoryRecordingFiles, "function");

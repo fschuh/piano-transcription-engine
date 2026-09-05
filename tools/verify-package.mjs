@@ -20,6 +20,8 @@ const requiredPackageFiles = [
   "dist/runtime/onlineAmtSession.d.ts",
   "dist/browser/index.js",
   "dist/browser/index.d.ts",
+  "dist/browser/browserOnlineAmtRecognizer.js",
+  "dist/browser/browserOnlineAmtRecognizer.d.ts",
   "dist/eval/index.js",
   "dist/eval/index.d.ts",
   "assets/models/online_amt_streaming.onnx",
