@@ -5,8 +5,10 @@ exact-chord matching, browser recognition, and evaluation code used by the sheet
 music viewer. It is installed directly from Git at an exact commit and is not
 published to npm (`private: true`).
 
-Task 02 establishes the installable package boundary. The production and browser
-entry points are intentionally empty until Tasks 03-05 move their implementations;
+The production entry point exposes the platform-neutral recognition contracts,
+online-AMT output decoder, exact-chord matcher, matcher diagnostics, immutable
+profile registry, and 16 kHz/512-sample protocol constants. The browser entry
+point remains intentionally empty until Task 05 moves the browser recognizer;
 the evaluation entry currently exposes only non-decoding file inventory, which
 Task 07 will extend with corpus validation.
 
@@ -42,6 +44,13 @@ installation; consumers do not need a sibling viewer checkout.
 The package allowlist contains compiled code, declarations, the canonical model,
 its license notice, and the capture worklet. Source evaluation fixtures, results,
 reports, tools, and legacy material are excluded from the installed package.
+
+The production core has no DOM, React, filesystem, viewer, benchmark, or report
+dependency. Recognition results and recognizer lifecycle contracts are engine
+types; viewer feedback state and presentation defaults remain application-owned.
+Output decoding is target-aware only for emitting pitch evidence and does not
+import or select a matcher profile. Consumers choose a profile explicitly with
+`matcherOptionsForListenMatcherProfile`.
 
 ## Model and runtime
 
@@ -80,4 +89,3 @@ copyrighted score annotations, or traces derived from them. Those inputs live in
 the private `piano-transcription-evals` repository and are supplied explicitly to
 the eval API. Only original, public-domain, licensed, or non-musical numeric
 fixtures belong here.
-

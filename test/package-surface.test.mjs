@@ -9,7 +9,18 @@ import * as browser from "../dist/browser/index.js";
 import { inventoryRecordingFiles } from "../dist/eval/index.js";
 
 test("keeps production, browser, and evaluation exports separate", () => {
-  assert.deepEqual(Object.keys(production), []);
+  for (const name of [
+    "DEFAULT_LISTEN_MATCHER_PROFILE_ID",
+    "ExactChordMatcher",
+    "LISTEN_MATCHER_PROFILES",
+    "ONLINE_AMT_CHUNK_SIZE",
+    "ONLINE_AMT_SAMPLE_RATE",
+    "OnlineAmtOutputDecoder",
+    "decodeOnlineAmtOutput",
+    "matcherOptionsForListenMatcherProfile",
+  ]) {
+    assert.ok(name in production, `missing production export ${name}`);
+  }
   assert.deepEqual(Object.keys(browser), []);
   assert.equal("inventoryRecordingFiles" in production, false);
   assert.equal("inventoryRecordingFiles" in browser, false);
@@ -36,4 +47,3 @@ test("evaluation inventory lists inputs without reading their contents", async (
     await rm(root, { recursive: true, force: true });
   }
 });
-
