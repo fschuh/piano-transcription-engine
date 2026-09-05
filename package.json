@@ -1,0 +1,54 @@
+{
+  "name": "@fschuh/piano-transcription-engine",
+  "version": "0.1.0",
+  "description": "Reusable online piano transcription, matching, and evaluation engine",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js"
+    },
+    "./eval": {
+      "types": "./dist/eval/index.d.ts",
+      "import": "./dist/eval/index.js"
+    },
+    "./assets/models/online_amt_streaming.onnx": "./assets/models/online_amt_streaming.onnx",
+    "./assets/models/online_amt.LICENSE.txt": "./assets/models/online_amt.LICENSE.txt",
+    "./assets/worklets/online-amt-capture.js": "./assets/worklets/online-amt-capture.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "assets/models/online_amt_streaming.onnx",
+    "assets/models/online_amt.LICENSE.txt",
+    "assets/worklets/online-amt-capture.js",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node tools/verify-package.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build --silent && node --test test/*.test.mjs",
+    "eval:inventory": "npm run build --silent && node dist/eval/inventoryCli.js",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "onnxruntime-web": "1.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
