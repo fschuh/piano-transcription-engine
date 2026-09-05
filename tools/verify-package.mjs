@@ -2,6 +2,8 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { moduleSpecifiersOf } from "./moduleSpecifiers.mjs";
+
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const requiredPackageFiles = [
   "dist/index.js",
@@ -24,6 +26,10 @@ const requiredPackageFiles = [
   "dist/browser/browserOnlineAmtRecognizer.d.ts",
   "dist/eval/index.js",
   "dist/eval/index.d.ts",
+  "dist/eval/functionalEvaluation.js",
+  "dist/eval/functionalEvaluation.d.ts",
+  "dist/eval/functionalFixtures.js",
+  "dist/eval/functionalFixtures.d.ts",
   "assets/models/online_amt_streaming.onnx",
   "assets/models/online_amt.LICENSE.txt",
   "assets/worklets/online-amt-capture.js",
@@ -31,7 +37,6 @@ const requiredPackageFiles = [
 const skippedDirectories = new Set([".git", "dist", "node_modules"]);
 const privateCorpusExtensions = new Set([".mid", ".midi", ".mp3"]);
 const viewerReferences = ["sheet-music-viewer", "webapp/src"];
-const moduleSpecifierPattern = /(?:from\s+|import\s*\(|export\s+[^;]*?from\s+)["']([^"']+)["']/g;
 
 async function walk(directory) {
   const result = [];
@@ -77,8 +82,7 @@ if (
 const sourceFiles = repositoryFiles.filter((path) => path.endsWith(".ts"));
 for (const path of sourceFiles) {
   const source = await readFile(path, "utf8");
-  for (const match of source.matchAll(moduleSpecifierPattern)) {
-    const specifier = match[1] ?? "";
+  for (const specifier of moduleSpecifiersOf(source)) {
     const forbidden = viewerReferences.find((reference) => specifier.includes(reference));
     if (forbidden !== undefined) {
       throw new Error(

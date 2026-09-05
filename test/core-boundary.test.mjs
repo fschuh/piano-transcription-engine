@@ -5,6 +5,8 @@ import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { moduleSpecifiersOf } from "../tools/moduleSpecifiers.mjs";
+
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const coreRoot = join(repositoryRoot, "src", "core");
 const forbiddenImportFragments = [
@@ -16,7 +18,6 @@ const forbiddenImportFragments = [
   "report",
   "node:fs",
 ];
-const moduleSpecifierPattern = /(?:from\s+|import\s*\(|export\s+[^;]*?from\s+)["']([^"']+)["']/g;
 
 test("core modules import only other platform-neutral core modules", async () => {
   const paths = (await readdir(coreRoot))
@@ -26,8 +27,7 @@ test("core modules import only other platform-neutral core modules", async () =>
 
   for (const path of paths) {
     const source = await readFile(path, "utf8");
-    for (const match of source.matchAll(moduleSpecifierPattern)) {
-      const specifier = match[1] ?? "";
+    for (const specifier of moduleSpecifiersOf(source)) {
       assert.ok(specifier.startsWith("./"), `${path} has non-core import ${specifier}`);
       for (const fragment of forbiddenImportFragments) {
         assert.equal(

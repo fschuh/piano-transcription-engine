@@ -9,8 +9,8 @@ The production entry point exposes the platform-neutral recognition contracts,
 online-AMT output decoder, exact-chord matcher, matcher diagnostics, immutable
 profile registry, and 16 kHz/512-sample protocol constants. The browser entry
 point exposes the injected `BrowserOnlineAmtRecognizer`; the evaluation entry
-currently exposes only non-decoding file inventory, which Task 07 will extend
-with corpus validation.
+exposes the public-safe functional trace replayer and recording-file inventory,
+which Task 07 will extend with private-corpus validation.
 
 ## Commands
 
@@ -51,6 +51,44 @@ types; viewer feedback state and presentation defaults remain application-owned.
 Output decoding is target-aware only for emitting pitch evidence and does not
 import or select a matcher profile. Consumers choose a profile explicitly with
 `matcherOptionsForListenMatcherProfile`.
+
+## Functional evaluation
+
+`PUBLIC_FUNCTIONAL_EVALUATION_FIXTURES` contains eight original numeric traces
+covering isolated recognition, continuous sequencing, dynamics, repeated
+chords, omitted-bass and false-advance safety, and skipped/duplicate advance
+correctness. `evaluateFunctionalFixture`, `evaluateFunctionalSuite`, and
+`compareFunctionalMatcherConfigurations` replay them through the production
+matcher and report advancement, processing-time, and latency metrics. Under
+`baseline-v1` every one of the twelve expected score moments advances exactly
+once, with no false, skipped, duplicate, or late advance in any case. The
+repeated-chord trace holds three consecutive identical moments, mirroring the
+private corpus's repeated chord, so the matcher must re-arm twice in a row while
+the chord keeps sounding; removing the third attack leaves that moment
+unadvanced rather than satisfied by carry-over evidence.
+
+A comparison reports regressions per case and per classification
+(`false-advance`, `skipped-advance`, `duplicate-advance`, `late-advance`, and a
+changed advance order), never from a suite total or a per-case pass/fail
+boolean. A candidate that removes one unsafe classification while introducing
+another is therefore still reported as a regression of the classification it
+made worse.
+
+`npm test` builds the package, discards `.test-dist`, compiles the TypeScript
+tests, and then discovers `test/**/*.test.mjs` and `.test-dist/test/**/*.test.js`
+instead of naming each entry point. Intentional omitted-bass, extra-note,
+onset-gate, and refractory mutations demonstrate that the relevant safety and
+correctness cases fail when matcher behavior regresses, and boundary tests cover
+the inclusive latency ceiling and the fixture validation that refuses to score an
+unreplayable trace.
+
+Enforced, not merely documented: `test/eval-boundary.test.mjs` fails if an
+evaluation module imports anything but the public production entry and its
+siblings, if the replayer or its fixtures reach the filesystem, network, or
+process state, if a production module imports evaluation code, or if any active
+test imports application code, a viewer path, or a historical Round 1/2
+artifact. The boundary scanners share `tools/moduleSpecifiers.mjs`, which also
+sees bare side-effect imports such as `import "react";`.
 
 ## Model and runtime
 
