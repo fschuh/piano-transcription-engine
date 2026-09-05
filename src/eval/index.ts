@@ -3,6 +3,33 @@ export {
   type RecordingFileInventory,
 } from "./recordingInventory.js";
 export {
+  parseMp3Metadata,
+  type Mp3Metadata,
+} from "./audioFile.js";
+export {
+  groupMidiNotesIntoMoments,
+  parseMidiFile,
+  type MidiFileContents,
+  type MidiNote,
+  type MidiTempoChange,
+} from "./midiFile.js";
+export {
+  DEFAULT_AUDIO_SPAN_TOLERANCE_MS,
+  DEFAULT_MOMENT_TOLERANCE_MS,
+  inventoryRecordingCorpus,
+  parseSetupMetadata,
+  type RecordingCorpusInventory,
+  type RecordingCorpusOptions,
+  type RecordingMidiSummary,
+  type RecordingSetupInventory,
+  type RecordingSetupSource,
+  type RecordingTakeInventory,
+  type RecordingTier,
+  type RecordingTierSummary,
+  type ScoreAnnotation,
+  type ScoreMomentAnnotation,
+} from "./recordingCorpus.js";
+export {
   compareFunctionalMatcherConfigurations,
   evaluateFunctionalFixture,
   evaluateFunctionalSuite,

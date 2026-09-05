@@ -10,6 +10,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "piano-transcription-eval": "./dist/eval/inventoryCli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

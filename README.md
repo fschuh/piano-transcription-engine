@@ -24,8 +24,26 @@ npm pack --dry-run
 ```
 
 With no recordings directory, `eval:inventory` inspects the public-safe
-`evals/fixtures` directory. It lists MP3/MIDI paths only and never decodes or
-modifies them.
+`evals/fixtures` directory. The command is also installed as the
+`piano-transcription-eval` binary, which is how the private corpus repository
+invokes it:
+
+```text
+piano-transcription-eval ./recordings --annotations ./annotations/<file>.json
+```
+
+It pairs MP3 and MIDI files, reports gold and silver tiers separately, treats a
+`metadata.yaml` directory as one instrument/microphone setup and each loose pair
+as its own unknown-source setup, and fails on unpaired files, byte-identical
+duplicates, note attacks outside their paired audio, or a take that does not
+match its annotation. Sample rate, channel count, duration, and bitrate are read
+from frame headers and reported as-is; no input is decoded, resampled,
+normalized, or rewritten.
+
+Score annotations are **caller data**. This repository contains no score
+sequence, no recording, and no annotation of its own: the private repository
+passes its annotation file in at run time, and every check compares a take
+against what it was given.
 
 Git installation runs `prepare`, which builds JavaScript and declarations into
 `dist`. A checkout therefore needs a supported Node/npm toolchain during
