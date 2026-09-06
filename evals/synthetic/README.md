@@ -1,7 +1,7 @@
 # Public functional fixtures
 
 The active functional suite is defined in
-`src/eval/functionalFixtures.ts`. Its eight project-authored numeric traces cover
+`src/eval/functionalFixtures.ts`. Its nine project-authored numeric traces cover
 isolated recognition, continuous sequencing, dynamics, repeated chords,
 omitted-bass safety, false advances, skipped advances, and duplicate advances.
 

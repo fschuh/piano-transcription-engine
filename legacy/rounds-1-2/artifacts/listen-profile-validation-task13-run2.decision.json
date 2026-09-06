@@ -1,0 +1,108 @@
+{
+  "archivalExtract": true,
+  "sourcePath": "benchmark-results/listen-profile-validation-task13-run2.json",
+  "name": "listen-profile-validation",
+  "baselineProfileId": "baseline-v1",
+  "candidateProfileIds": [
+    "early-open-v2",
+    "steady-open-v2",
+    "early-held-v2",
+    "steady-held-v2"
+  ],
+  "registryVersion": 2,
+  "profiles": [
+    {
+      "profileId": "baseline-v1",
+      "profile": {
+        "onsetThreshold": 0.6,
+        "targetNoteThreshold": 0.5,
+        "activeTargetThreshold": 0.35,
+        "extraNoteThreshold": 0.97,
+        "requireFreshBassOnset": true
+      }
+    },
+    {
+      "profileId": "early-open-v2",
+      "profile": {
+        "onsetThreshold": 0.45,
+        "targetNoteThreshold": 0.5,
+        "activeTargetThreshold": 0.2,
+        "extraNoteThreshold": 0.99,
+        "requireFreshBassOnset": true
+      }
+    },
+    {
+      "profileId": "steady-open-v2",
+      "profile": {
+        "onsetThreshold": 0.5,
+        "targetNoteThreshold": 0.5,
+        "activeTargetThreshold": 0.2,
+        "extraNoteThreshold": 0.99,
+        "requireFreshBassOnset": true
+      }
+    },
+    {
+      "profileId": "early-held-v2",
+      "profile": {
+        "onsetThreshold": 0.45,
+        "targetNoteThreshold": 0.5,
+        "activeTargetThreshold": 0.275,
+        "extraNoteThreshold": 0.99,
+        "requireFreshBassOnset": true
+      }
+    },
+    {
+      "profileId": "steady-held-v2",
+      "profile": {
+        "onsetThreshold": 0.5,
+        "targetNoteThreshold": 0.5,
+        "activeTargetThreshold": 0.275,
+        "extraNoteThreshold": 0.99,
+        "requireFreshBassOnset": true
+      }
+    }
+  ],
+  "evidenceComplete": true,
+  "eligibleProfileIds": [],
+  "recommendation": {
+    "code": "no-safe-candidate",
+    "eligibleProfileIds": [],
+    "explanation": "No frozen candidate passed every gate, so baseline-v1 remains the production default. Each candidate's failed gate codes name the rows that rejected it."
+  },
+  "candidates": [
+    {
+      "profileId": "early-open-v2",
+      "failedGateCodes": [
+        "safety-isolated-false-advance",
+        "release-isolated-course-clear"
+      ],
+      "eligible": false
+    },
+    {
+      "profileId": "steady-open-v2",
+      "failedGateCodes": [
+        "safety-isolated-false-advance",
+        "release-isolated-course-clear"
+      ],
+      "eligible": false
+    },
+    {
+      "profileId": "early-held-v2",
+      "failedGateCodes": [
+        "safety-isolated-false-advance",
+        "release-isolated-recognition",
+        "release-isolated-course-clear"
+      ],
+      "eligible": false
+    },
+    {
+      "profileId": "steady-held-v2",
+      "failedGateCodes": [
+        "safety-isolated-false-advance",
+        "release-isolated-recognition",
+        "release-isolated-course-clear"
+      ],
+      "eligible": false
+    }
+  ]
+}

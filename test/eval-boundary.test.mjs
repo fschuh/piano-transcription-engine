@@ -10,9 +10,14 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 async function sourceFiles(directory, suffixes) {
   const entries = await readdir(join(repositoryRoot, directory), { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && suffixes.some((suffix) => entry.name.endsWith(suffix)))
-    .map((entry) => join(directory, entry.name));
+  const paths = await Promise.all(entries.map(async (entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return sourceFiles(path, suffixes);
+    return entry.isFile() && suffixes.some((suffix) => entry.name.endsWith(suffix))
+      ? [path]
+      : [];
+  }));
+  return paths.flat();
 }
 
 async function importsOf(path) {
@@ -21,6 +26,7 @@ async function importsOf(path) {
 
 /** Application, viewer, and historical-artifact material an active eval may never reach. */
 const forbiddenEverywhere = [
+  "legacy",
   "react",
   "sheet-music-viewer",
   "webapp",
@@ -103,5 +109,15 @@ test("active tests use the eval entry point and no application or historical art
         `${path} reaches past the eval entry point with ${specifier}`,
       );
     }
+  }
+});
+
+test("test sources do not read historical archive paths", async () => {
+  const guardPath = fileURLToPath(import.meta.url);
+  for (const path of await sourceFiles("test", [".ts", ".mjs", ".js"])) {
+    // Only this file defines the forbidden token and is exempt from this scan.
+    if (resolve(repositoryRoot, path) === guardPath) continue;
+    const source = await readFile(join(repositoryRoot, path), "utf8");
+    assert.equal(/\blegacy\b/i.test(source), false, `${path} references the historical archive`);
   }
 });

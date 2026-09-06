@@ -294,6 +294,26 @@ export const PUBLIC_FUNCTIONAL_EVALUATION_FIXTURES: readonly FunctionalEvaluatio
       ],
     },
     {
+      id: "spurious-bass-onset-safety",
+      kind: "omitted-bass",
+      description: "A synthetic false bass onset clears candidate gates but not baseline.",
+      targets: [{ id: "spurious-bass-target", pitches: [45, 57, 61], shouldAdvance: false }],
+      frames: [
+        frame({
+          atMs: 100,
+          attacks: [{ midi: 45, confidence: 0.54 }, { midi: 57 }, { midi: 61 }],
+          physicalEventId: "upper-voices-only",
+          playedTargetId: null,
+        }),
+        frame({
+          atMs: 132,
+          active: [{ midi: 45 }, { midi: 57 }, { midi: 61 }],
+          physicalEventId: "upper-voices-only",
+          playedTargetId: null,
+        }),
+      ],
+    },
+    {
       id: "omitted-bass-safety",
       kind: "omitted-bass",
       description: "Stable bass evidence cannot replace the omitted fresh bass attack.",

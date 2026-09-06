@@ -1,5 +1,9 @@
 # Piano transcription engine
 
+Round 1/2 decisions and source provenance are archived in
+[legacy/rounds-1-2](legacy/rounds-1-2/README.md). Historical emitters and verifiers
+are non-active; the production default remains `baseline-v1`.
+
 `@fschuh/piano-transcription-engine` owns the reusable online-AMT recognition,
 exact-chord matching, browser recognition, and evaluation code used by the sheet
 music viewer. It is installed directly from Git at an exact commit and is not
@@ -72,7 +76,7 @@ import or select a matcher profile. Consumers choose a profile explicitly with
 
 ## Functional evaluation
 
-`PUBLIC_FUNCTIONAL_EVALUATION_FIXTURES` contains eight original numeric traces
+`PUBLIC_FUNCTIONAL_EVALUATION_FIXTURES` contains nine original numeric traces
 covering isolated recognition, continuous sequencing, dynamics, repeated
 chords, omitted-bass and false-advance safety, and skipped/duplicate advance
 correctness. `evaluateFunctionalFixture`, `evaluateFunctionalSuite`, and

@@ -1,0 +1,119 @@
+{
+  "sourceRepository": "https://github.com/fschuh/omr-sheet-music-viewer",
+  "sourceCommit": "89afafcdd7fd06db0626feba6a0665ab1c3bf798",
+  "archivedOn": "2026-09-06",
+  "files": [
+    {
+      "sourcePath": "benchmark-results/listen-bass-qualification-task22.json",
+      "sha256": "3b7085969a15242ff06b6a9fc58de72882626609c1e816a3dc7d7cb6c318279e",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-bass-qualification-task22.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-dynamics-profile-validation-task11.json",
+      "sha256": "1028cd52275c1c91838c8b920ef2d90324ff180b38a88096dba6408970890042",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-dynamics-profile-validation-task11.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-matcher-domain-archive-task24.json",
+      "sha256": "adf66cb52f7f6c62c99d722f0d4b04ecb89a41ba66770d38542e995385798a43",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-matcher-domain-archive-task24.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-matcher-multidomain-sweep-task08.json",
+      "sha256": "fa09a935ee36b14786659933152bed65498b7433007f888104f79357b7050aeb",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-matcher-multidomain-sweep-task08.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-profile-validation-task13-run1.json",
+      "sha256": "3ac11d4abe8231d3c3c61abf4e597d2651dd952ad905ee9b9033eef31b5d38d3",
+      "disposition": "decision-only extract; full score/trace detail remains at source",
+      "archivedPath": "artifacts/listen-profile-validation-task13-run1.decision.json",
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-profile-validation-task13-run1.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-profile-validation-task13-run2.json",
+      "sha256": "28a170b856df67b50842aefb243791c67b1dfa9dedbde3fdc036c607401daf79",
+      "disposition": "decision-only extract; full score/trace detail remains at source",
+      "archivedPath": "artifacts/listen-profile-validation-task13-run2.decision.json",
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-profile-validation-task13-run2.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-round-two-ablation-task26-run1.json",
+      "sha256": "271b673a9696c449b7c3e91b4298b22a3d83b927a890643f2d62eb2ae20f0fc7",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-round-two-ablation-task26-run1.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-round-two-ablation-task26-run2.json",
+      "sha256": "0766dd023a72a8859aa0eb415650f0f36ecf2952daad4181a8647b4b6b480707",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-round-two-ablation-task26-run2.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-round-two-approved-profiles-task29.json",
+      "sha256": "c71624cefb4db1f5ac7b0981ca4e62f3756dbd999d279ff6718c7ae7bc346873",
+      "disposition": "verbatim final artifact",
+      "archivedPath": "artifacts/listen-round-two-approved-profiles-task29.json",
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-round-two-approved-profiles-task29.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-round-two-candidate-manifest-task27.json",
+      "sha256": "4016355ba98cdd4962f7196dbb7f75f8c1fc49bb3be9ef3f1ea66f1f0b701a9e",
+      "disposition": "verbatim final artifact",
+      "archivedPath": "artifacts/listen-round-two-candidate-manifest-task27.json",
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-round-two-candidate-manifest-task27.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-round-two-corpus-task25-run1.json",
+      "sha256": "15b029439b34e006d89db57a0796603ea9169dbe1e4a7cbc3d5728eb6fd96176",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-round-two-corpus-task25-run1.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-round-two-corpus-task25-run2.json",
+      "sha256": "4e462cc799e570bd34b4d1d83349aa6585b4aca6c82390de5307c9113686bf1c",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-round-two-corpus-task25-run2.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-round-two-eligibility-manifest-task28.json",
+      "sha256": "3c0ac0571d04ec8a453558fec9fd1ab6ae84c8377ffcfb55e499cf221219e7ce",
+      "disposition": "verbatim final artifact",
+      "archivedPath": "artifacts/listen-round-two-eligibility-manifest-task28.json",
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-round-two-eligibility-manifest-task28.json"
+    },
+    {
+      "sourcePath": "benchmark-results/listen-sequence-profile-validation-task10.json",
+      "sha256": "e969060b9011d86f1eb7cbb551077fbff69d03a8b01d4b548f499eaba51c927e",
+      "disposition": "source-only intermediate measurement; may include copyrighted score/trace detail",
+      "archivedPath": null,
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/benchmark-results/listen-sequence-profile-validation-task10.json"
+    },
+    {
+      "sourcePath": "tools/online_amt/LISTEN_BENCHMARK.md",
+      "sha256": "3122fbf7b4ea4be63d8cd709fc214d0dd7ba22c58454a386847f780f96559fc1",
+      "disposition": "verbatim final-decision sections and calibration-plan Task 23 policy re-score excerpt",
+      "archivedPath": "reports/",
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/tools/online_amt/LISTEN_BENCHMARK.md"
+    },
+    {
+      "sourcePath": "plans/listen-matcher-calibration-plan.md",
+      "sha256": "2be45fa6bc26e45bfb87685f1e3e99c2ad5b1e57823be45e1f2b890880d631d5",
+      "disposition": "verbatim measured outcome excerpt",
+      "archivedPath": "plan-outcome.md",
+      "url": "https://github.com/fschuh/omr-sheet-music-viewer/blob/89afafcdd7fd06db0626feba6a0665ab1c3bf798/plans/listen-matcher-calibration-plan.md"
+    }
+  ]
+}

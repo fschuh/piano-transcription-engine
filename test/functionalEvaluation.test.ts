@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { LISTEN_MULTIDOMAIN_CANDIDATE_PROFILE_IDS } from "../src/index.js";
 
 import {
   compareFunctionalMatcherConfigurations,
@@ -86,17 +87,28 @@ test("baseline-v1 passes the public functional suite with bounded latency", () =
     JSON.stringify(result.cases.filter((value) => !value.passed), null, 2),
   );
   assert.deepEqual(result.totals, {
-    caseCount: 8,
-    passedCaseCount: 8,
+    caseCount: 9,
+    passedCaseCount: 9,
     failedCaseCount: 0,
     advanceCount: 12,
     falseAdvanceCount: 0,
     skippedAdvanceCount: 0,
     duplicateAdvanceCount: 0,
     lateAdvanceCount: 0,
-    processingTimeMs: 35,
+    processingTimeMs: 37,
     maxAdvanceLatencyMs: 32,
   });
+});
+
+test("a spurious bass onset explains baseline safety versus the frozen candidates", () => {
+  const definition = fixture("spurious-bass-onset-safety");
+  assert.equal(evaluateFunctionalFixture(definition, "baseline-v1").passed, true);
+  assert.equal(LISTEN_MULTIDOMAIN_CANDIDATE_PROFILE_IDS.length, 4);
+  for (const profile of LISTEN_MULTIDOMAIN_CANDIDATE_PROFILE_IDS) {
+    const result = evaluateFunctionalFixture(definition, profile);
+    assert.equal(result.passed, false, profile);
+    assert.equal(result.falseAdvanceCount, 1, profile);
+  }
 });
 
 test("every expected score moment advances exactly once under baseline-v1", () => {
