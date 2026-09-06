@@ -9,11 +9,6 @@ import {
   ONLINE_AMT_SAMPLE_RATE,
 } from "./onlineAmtProtocol.js";
 
-const WASM_URL = new URL(
-  "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
-  import.meta.url,
-).href;
-
 const STATE_INPUTS = [
   "audio_buffer",
   "mel_buffer",
@@ -45,17 +40,25 @@ interface OnlineAmtSessionRuntimeOptions {
   enableCpuMemArena?: boolean;
   enableMemPattern?: boolean;
   executionMode?: "sequential" | "parallel";
-  /** Overrides the packaged-runtime WASM URL, primarily for custom browser bundling. */
-  wasmUrl?: string;
-  /** Supplies WASM bytes directly for filesystem-backed or otherwise offline execution. */
-  wasmBinary?: ArrayBufferLike | Uint8Array;
 }
 
 /** A URL-loaded browser model or bytes supplied by an offline caller. */
-export type OnlineAmtSessionOptions = OnlineAmtSessionRuntimeOptions & (
+type OnlineAmtModelSource =
   | { modelUrl: string; modelData?: never }
-  | { modelUrl?: never; modelData: Uint8Array }
-);
+  | { modelUrl?: never; modelData: Uint8Array };
+
+/**
+ * Where ONNX Runtime's WASM binary comes from. The caller must say, because npm
+ * hoists `onnxruntime-web` above this package: only the consumer's bundler or
+ * filesystem knows where the binary ended up, so a path relative to this
+ * package's own directory is not a usable default.
+ */
+type OnlineAmtWasmSource =
+  | { wasmUrl: string; wasmBinary?: never }
+  | { wasmUrl?: never; wasmBinary: ArrayBufferLike | Uint8Array };
+
+export type OnlineAmtSessionOptions =
+  OnlineAmtSessionRuntimeOptions & OnlineAmtModelSource & OnlineAmtWasmSource;
 
 export interface OnlineAmtStepResult {
   scores: Float32Array<ArrayBuffer>;
@@ -101,12 +104,21 @@ export class OnlineAmtSession {
   }
 
   static async create(options: OnlineAmtSessionOptions): Promise<OnlineAmtSession> {
-    if (options.wasmBinary === undefined) {
-      delete env.wasm.wasmBinary;
-      env.wasm.wasmPaths = { wasm: options.wasmUrl ?? WASM_URL };
-    } else {
+    // A caller that reaches here from JavaScript fails on its own call, before
+    // any global ONNX Runtime state is touched, rather than on a later fetch of
+    // a path this package invented.
+    const { wasmBinary, wasmUrl } = options;
+    if (wasmBinary !== undefined) {
       delete env.wasm.wasmPaths;
-      env.wasm.wasmBinary = options.wasmBinary;
+      env.wasm.wasmBinary = wasmBinary;
+    } else if (typeof wasmUrl === "string") {
+      delete env.wasm.wasmBinary;
+      env.wasm.wasmPaths = { wasm: wasmUrl };
+    } else {
+      throw new Error(
+        "online_amt requires wasmUrl or wasmBinary: this package does not resolve " +
+        "ONNX Runtime's WASM binary for its consumer",
+      );
     }
     env.wasm.numThreads = options.numThreads ?? 1;
     env.wasm.proxy = false;

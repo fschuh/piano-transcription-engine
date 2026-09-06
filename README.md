@@ -134,9 +134,25 @@ not a transitive viewer implementation detail.
 `audio_buffer`, `mel_buffer`, `cnn_cache_1`, `cnn_cache_2`, `lstm_h`, `lstm_c`,
 `previous_output`, and `silence_count`. Its defaults remain one WASM thread,
 full graph optimization, CPU arena and memory-pattern allocation enabled, and
-sequential execution. Browser callers pass `modelUrl`; offline callers may pass
-`modelData` and `wasmBinary` so inference needs no HTTP server or filesystem
-dependency in production code.
+sequential execution.
+
+Every session names two sources, and neither has a default:
+
+| Source | From a URL | From bytes |
+| --- | --- | --- |
+| Model | `modelUrl` | `modelData` |
+| ONNX Runtime WASM | `wasmUrl` | `wasmBinary` |
+
+Browser callers pass `modelUrl` and `wasmUrl`; offline callers pass `modelData`
+and `wasmBinary`, so inference needs no HTTP server or filesystem dependency in
+production code. The options type accepts exactly one of each pair, and
+`OnlineAmtSession.create` refuses a missing WASM source before it touches any
+ONNX Runtime state.
+
+This package deliberately does not resolve ONNX Runtime's WASM binary itself.
+npm hoists `onnxruntime-web` above an installed dependency, so a path relative to
+this package's own directory does not exist after a Git install; only the
+consumer's bundler or filesystem knows where the binary ended up.
 
 The deterministic 180-frame fixture under
 `evals/fixtures/online_amt_runtime` verifies score parity within `2e-4`, exact
@@ -180,6 +196,9 @@ of this package: returning `undefined` keeps the underlying error message, and
 the lifecycle error and thrown error always carry the same text.
 
 The worker entry remains consumer-owned so its bundler can compile it normally.
+It receives the recognizer's `initialize` message and creates the
+`OnlineAmtSession`, so it is also where the consumer supplies `wasmUrl` — the
+recognizer neither knows nor invents where ONNX Runtime's WASM binary lives.
 The recognizer requests one input channel with echo cancellation, noise
 suppression, and automatic gain control disabled, then captures 512-sample
 chunks from a 16 kHz `AudioContext` without persisting or transmitting audio.

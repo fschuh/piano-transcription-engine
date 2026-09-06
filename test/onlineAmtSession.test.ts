@@ -8,6 +8,30 @@ import {
   ONLINE_AMT_SAMPLE_RATE,
 } from "../src/runtime/onlineAmtProtocol.js";
 import { OnlineAmtSession } from "../src/runtime/onlineAmtSession.js";
+import type { OnlineAmtSessionOptions } from "../src/runtime/onlineAmtSession.js";
+
+// The package cannot resolve ONNX Runtime's WASM binary for its consumer, because
+// npm hoists onnxruntime-web above it. The options type says so, and the runtime
+// says so again for callers that are not typechecked.
+// @ts-expect-error a session must be given a WASM source
+const missingWasmSource: OnlineAmtSessionOptions = { modelUrl: "/model.onnx" };
+
+test("refuses a session with no WASM source rather than inventing a path", async () => {
+  await assert.rejects(
+    OnlineAmtSession.create(missingWasmSource),
+    /requires wasmUrl or wasmBinary/,
+  );
+});
+
+test("refuses an empty WASM URL the same way", async () => {
+  await assert.rejects(
+    OnlineAmtSession.create({
+      modelUrl: "/model.onnx",
+      wasmUrl: undefined,
+    } as unknown as OnlineAmtSessionOptions),
+    /requires wasmUrl or wasmBinary/,
+  );
+});
 
 interface FixtureMetadata {
   frames: number;
