@@ -106,18 +106,20 @@ export class OnlineAmtSession {
   static async create(options: OnlineAmtSessionOptions): Promise<OnlineAmtSession> {
     // A caller that reaches here from JavaScript fails on its own call, before
     // any global ONNX Runtime state is touched, rather than on a later fetch of
-    // a path this package invented.
+    // a path this package invented or inside ONNX Runtime on an unusable one.
+    // Every rejected value is one an untyped caller can supply: an absent,
+    // blank, or non-string URL, and an absent, empty, or non-buffer binary.
     const { wasmBinary, wasmUrl } = options;
-    if (wasmBinary !== undefined) {
+    if (wasmBinary !== undefined && wasmBinary !== null && wasmBinary.byteLength > 0) {
       delete env.wasm.wasmPaths;
       env.wasm.wasmBinary = wasmBinary;
-    } else if (typeof wasmUrl === "string") {
+    } else if (typeof wasmUrl === "string" && wasmUrl.trim() !== "") {
       delete env.wasm.wasmBinary;
       env.wasm.wasmPaths = { wasm: wasmUrl };
     } else {
       throw new Error(
-        "online_amt requires wasmUrl or wasmBinary: this package does not resolve " +
-        "ONNX Runtime's WASM binary for its consumer",
+        "online_amt requires a non-empty wasmUrl or wasmBinary: this package does " +
+        "not resolve ONNX Runtime's WASM binary for its consumer",
       );
     }
     env.wasm.numThreads = options.numThreads ?? 1;

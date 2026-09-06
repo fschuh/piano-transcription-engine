@@ -146,8 +146,10 @@ Every session names two sources, and neither has a default:
 Browser callers pass `modelUrl` and `wasmUrl`; offline callers pass `modelData`
 and `wasmBinary`, so inference needs no HTTP server or filesystem dependency in
 production code. The options type accepts exactly one of each pair, and
-`OnlineAmtSession.create` refuses a missing WASM source before it touches any
-ONNX Runtime state.
+`OnlineAmtSession.create` refuses an unusable WASM source — absent, blank, or
+non-string URL, absent, empty, or non-buffer binary — before it touches any ONNX
+Runtime state, so an untyped caller fails on its own call rather than later
+inside ONNX Runtime.
 
 This package deliberately does not resolve ONNX Runtime's WASM binary itself.
 npm hoists `onnxruntime-web` above an installed dependency, so a path relative to

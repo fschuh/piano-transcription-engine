@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
+import { env } from "onnxruntime-web/wasm";
+
 import {
   ONLINE_AMT_CHUNK_SIZE,
   ONLINE_AMT_SAMPLE_RATE,
@@ -16,21 +18,41 @@ import type { OnlineAmtSessionOptions } from "../src/runtime/onlineAmtSession.js
 // @ts-expect-error a session must be given a WASM source
 const missingWasmSource: OnlineAmtSessionOptions = { modelUrl: "/model.onnx" };
 
-test("refuses a session with no WASM source rather than inventing a path", async () => {
-  await assert.rejects(
-    OnlineAmtSession.create(missingWasmSource),
-    /requires wasmUrl or wasmBinary/,
-  );
-});
+const unusableWasmSources: Array<[string, Record<string, unknown>]> = [
+  ["no wasm source at all", {}],
+  ["an undefined url", { wasmUrl: undefined }],
+  ["an empty url", { wasmUrl: "" }],
+  ["a blank url", { wasmUrl: "   " }],
+  ["a non-string url", { wasmUrl: 7 }],
+  ["a null binary", { wasmBinary: null }],
+  ["an empty binary", { wasmBinary: new Uint8Array(0) }],
+  ["an empty buffer", { wasmBinary: new ArrayBuffer(0) }],
+  ["a non-buffer binary", { wasmBinary: "not bytes" }],
+];
 
-test("refuses an empty WASM URL the same way", async () => {
-  await assert.rejects(
-    OnlineAmtSession.create({
-      modelUrl: "/model.onnx",
-      wasmUrl: undefined,
-    } as unknown as OnlineAmtSessionOptions),
-    /requires wasmUrl or wasmBinary/,
-  );
+test("refuses every unusable WASM source without touching ONNX Runtime state", async () => {
+  const untouched = { wasm: "sentinel-that-must-survive.wasm" };
+  env.wasm.wasmPaths = untouched;
+  delete env.wasm.wasmBinary;
+  try {
+    await assert.rejects(
+      OnlineAmtSession.create(missingWasmSource),
+      /requires a non-empty wasmUrl or wasmBinary/,
+    );
+    for (const [description, source] of unusableWasmSources) {
+      await assert.rejects(
+        OnlineAmtSession.create(
+          { modelUrl: "/model.onnx", ...source } as unknown as OnlineAmtSessionOptions,
+        ),
+        /requires a non-empty wasmUrl or wasmBinary/,
+        `create accepted ${description}`,
+      );
+      assert.deepEqual(env.wasm.wasmPaths, untouched, `${description} changed wasmPaths`);
+      assert.equal(env.wasm.wasmBinary, undefined, `${description} set wasmBinary`);
+    }
+  } finally {
+    delete env.wasm.wasmPaths;
+  }
 });
 
 interface FixtureMetadata {
