@@ -18,6 +18,12 @@ export interface BrowserOnlineAmtRecognizerOptions {
   modelUrl: string;
   workletUrl: string;
   createWorker: () => Worker;
+  /**
+   * Optional application wording for a start failure. Returning undefined keeps
+   * the underlying error message, so device and permission phrasing stays with
+   * the application rather than in this package.
+   */
+  describeError?: (error: unknown) => string | undefined;
 }
 
 function messageForError(error: unknown): string {
@@ -187,7 +193,7 @@ export class BrowserOnlineAmtRecognizer implements NoteRecognizer {
         for (const track of stream.getTracks()) track.stop();
       }).catch(() => undefined);
       if (token !== this.sessionToken) return;
-      const message = messageForError(error);
+      const message = this.options.describeError?.(error) ?? messageForError(error);
       this.cleanupResources();
       this.updateLifecycle({
         state: "error",

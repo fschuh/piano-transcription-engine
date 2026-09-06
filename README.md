@@ -166,8 +166,18 @@ const recognizer = new BrowserOnlineAmtRecognizer({
     new URL("./onlineAmtWorker.ts", import.meta.url),
     { type: "module", name: "online-amt-inference" },
   ),
+  describeError: (error) => (
+    error instanceof DOMException && error.name === "NotAllowedError"
+      ? "Microphone permission was denied."
+      : undefined
+  ),
 });
 ```
+
+The optional `describeError` hook lets the application replace a start failure's
+message with its own wording. It is how permission and device phrasing stays out
+of this package: returning `undefined` keeps the underlying error message, and
+the lifecycle error and thrown error always carry the same text.
 
 The worker entry remains consumer-owned so its bundler can compile it normally.
 The recognizer requests one input channel with echo cancellation, noise

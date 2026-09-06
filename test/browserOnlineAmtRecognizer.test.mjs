@@ -356,6 +356,70 @@ test("maps initialization failures and cleans up acquired resources", async () =
   }
 });
 
+test("lets the application describe a start failure in its own wording", async () => {
+  const denial = new Error("Permission denied");
+  denial.name = "NotAllowedError";
+  const browser = installBrowserFakes({
+    getUserMedia: async () => {
+      throw denial;
+    },
+  });
+  const worker = new FakeWorker();
+  const observed = callbacks();
+  const described = [];
+  const recognizer = new BrowserOnlineAmtRecognizer({
+    modelUrl: "/model.onnx",
+    workletUrl: "/capture.js",
+    createWorker: () => worker,
+    describeError: (error) => {
+      described.push(error);
+      return error instanceof Error && error.name === "NotAllowedError"
+        ? "Microphone permission was denied."
+        : undefined;
+    },
+  });
+
+  try {
+    const starting = recognizer.start(1, observed.value);
+    worker.emit({ type: "initialized", loadTimeMs: 1 });
+    await assert.rejects(starting, /Microphone permission was denied\./);
+    assert.deepEqual(described, [denial]);
+    assert.equal(
+      observed.lifecycle.at(-1).error,
+      "Microphone permission was denied.",
+    );
+  } finally {
+    recognizer.stop();
+    browser.restore();
+  }
+});
+
+test("keeps the underlying message when the application describes nothing", async () => {
+  const browser = installBrowserFakes({
+    getUserMedia: async () => {
+      throw new Error("no capture device");
+    },
+  });
+  const worker = new FakeWorker();
+  const observed = callbacks();
+  const recognizer = new BrowserOnlineAmtRecognizer({
+    modelUrl: "/model.onnx",
+    workletUrl: "/capture.js",
+    createWorker: () => worker,
+    describeError: () => undefined,
+  });
+
+  try {
+    const starting = recognizer.start(1, observed.value);
+    worker.emit({ type: "initialized", loadTimeMs: 1 });
+    await assert.rejects(starting, /no capture device/);
+    assert.equal(observed.lifecycle.at(-1).error, "no capture device");
+  } finally {
+    recognizer.stop();
+    browser.restore();
+  }
+});
+
 test("turns a post-initialization worker failure into a terminal lifecycle", async () => {
   const { stream, track } = fakeStream();
   const browser = installBrowserFakes({ getUserMedia: async () => stream });
