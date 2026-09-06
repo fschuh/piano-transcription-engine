@@ -1,5 +1,7 @@
 # Piano transcription engine
 
+[EXTRACTION.md](EXTRACTION.md) records what each repository owns, the revision
+both consumers pin, and the commands that qualify a later engine revision.
 Round 1/2 decisions and source provenance are archived in
 [legacy/rounds-1-2](legacy/rounds-1-2/README.md). Historical emitters and verifiers
 are non-active; the production default remains `baseline-v1`.
@@ -13,8 +15,8 @@ The production entry point exposes the platform-neutral recognition contracts,
 online-AMT output decoder, exact-chord matcher, matcher diagnostics, immutable
 profile registry, and 16 kHz/512-sample protocol constants. The browser entry
 point exposes the injected `BrowserOnlineAmtRecognizer`; the evaluation entry
-exposes the public-safe functional trace replayer and recording-file inventory,
-which Task 07 will extend with private-corpus validation.
+exposes the public-safe functional trace replayer and the recording-corpus
+inventory that the private repository runs against its own recordings.
 
 ## Commands
 
