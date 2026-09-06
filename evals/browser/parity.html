@@ -1,0 +1,39 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>online_amt browser parity</title>
+<script type="importmap">
+{
+  "imports": {
+    "onnxruntime-web/wasm": "/node_modules/onnxruntime-web/dist/ort.wasm.bundle.min.mjs"
+  }
+}
+</script>
+<h1>online_amt browser parity</h1>
+<p id="status">Loading…</p>
+<pre id="result"></pre>
+<script type="module">
+import { runRuntimeFixture } from "/evals/browser/runtimeFixture.js";
+
+const status = document.querySelector("#status");
+try {
+  const result = await runRuntimeFixture({
+    load: async (name) => new Uint8Array(
+      await (await fetch(`/evals/fixtures/online_amt_runtime/${name}`)).arrayBuffer(),
+    ),
+    session: {
+      modelUrl: "/assets/models/online_amt_streaming.onnx",
+      wasmUrl: "/node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
+    },
+    onProgress: (stage) => { status.textContent = stage; },
+  });
+  window.parityResult = result;
+  status.textContent = "Complete.";
+  document.querySelector("#result").textContent = JSON.stringify(result, null, 2);
+  document.body.dataset.status = "complete";
+} catch (error) {
+  window.parityError = error instanceof Error ? (error.stack ?? error.message) : String(error);
+  status.textContent = "Failed.";
+  document.querySelector("#result").textContent = window.parityError;
+  document.body.dataset.status = "error";
+}
+</script>

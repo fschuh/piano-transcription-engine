@@ -45,6 +45,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build --silent && node -e \"require('node:fs').rmSync('.test-dist',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node --test \"test/**/*.test.mjs\" \".test-dist/test/**/*.test.js\"",
     "eval:inventory": "npm run build --silent && node dist/eval/inventoryCli.js",
+    "eval:browser-parity": "npm run build --silent && node tools/run-browser-parity.mjs",
     "prepare": "npm run build"
   },
   "dependencies": {

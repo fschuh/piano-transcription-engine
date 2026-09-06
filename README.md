@@ -162,6 +162,30 @@ decoded states, exact signal-active results, reset behavior, and faster-than-
 audio-cadence sequential execution. Model reproduction and native validation
 instructions are in `tools/online_amt/README.md`.
 
+## Browser and offline parity
+
+```bash
+npm run eval:browser-parity
+```
+
+`evals/browser/runtimeFixture.js` replays that same fixture through the
+production session and output decoder. `tools/run-browser-parity.mjs` runs the
+one module twice — offline in Node against bytes from disk, and in headless
+Chrome against the same files over HTTP — and compares the two. It needs a
+Chrome or Chromium binary; `CHROME_PATH` names one that is not on the default
+path.
+
+Everything that must not depend on the environment is compared exactly: decoded
+states, signal-active results, onset and note-event counts, the frames carrying
+active-pitch and target evidence, and a structural hash of the decoded output
+that excludes confidences. Each side must also stay within the fixture's own
+`2e-4` score bound and must actually decode something. A raw hash of the model
+scores is reported but not asserted, so a last-bit inference difference between
+the two environments is visible rather than silent, and a real behavioral
+divergence still fails.
+
+Both environments currently produce bit-identical inference.
+
 ## Browser assumptions
 
 The browser integration targets modern secure-context browsers/webviews with ES
