@@ -46,8 +46,11 @@ below pass at. Documentation commits follow it, so this repository's head and
 that revision do not produce byte-identical package tarballs — the packaged
 README differs. What is identical is everything that runs: the compiled code, the
 type declarations, and the assets. That is why a documentation commit does not
-move the pin, and why a commit touching `src/`, `assets/`, or the tooling that
-`prepare` runs does, qualified by re-running the commands below.
+move the pin, and why any commit that changes the bytes a consumer installs
+does — `src/`, `assets/`, the tooling `prepare` runs, and the checkout
+attributes, since npm installs this package by cloning it and a platform that
+rewrote line endings would hand the consumer different files. Each such commit is
+qualified by re-running the commands below.
 
 ## What was archived rather than ported
 

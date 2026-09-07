@@ -5,20 +5,50 @@
 // over HTTP. Both must satisfy the fixture's own bounds, and the results that
 // must not depend on the environment must be identical.
 import { spawn } from "node:child_process";
-import { createReadStream } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { createServer as createSocketServer } from "node:net";
 import { tmpdir } from "node:os";
-import { dirname, extname, join, normalize, resolve } from "node:path";
+import { dirname, extname, isAbsolute, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { runRuntimeFixture } from "../evals/browser/runtimeFixture.js";
 
-const CHROME = process.env.CHROME_PATH ??
-  (process.platform === "win32"
-    ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-    : "google-chrome");
+// Windows and macOS install Chrome at a fixed path, and a per-user Windows
+// install is somewhere else again, so the candidates are probed rather than
+// assumed. Elsewhere the browser is a command resolved through PATH.
+function chromeCandidates() {
+  if (process.platform === "win32") {
+    const local = process.env.LOCALAPPDATA;
+    return [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+      ...(local === undefined
+        ? []
+        : [join(local, "Google", "Chrome", "Application", "chrome.exe")]),
+    ];
+  }
+  if (process.platform === "darwin") {
+    return [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      `${process.env.HOME ?? ""}/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`,
+    ];
+  }
+  return ["google-chrome"];
+}
+
+function installedChrome() {
+  const candidates = chromeCandidates();
+  // A bare command is left to PATH. An absolute candidate has to exist, and the
+  // first one is kept when none does, so the failure names a real location.
+  const found = candidates.find((candidate) => (
+    !isAbsolute(candidate) || existsSync(candidate)
+  ));
+  return found ?? candidates[0];
+}
+
+const CHROME = process.env.CHROME_PATH ?? installedChrome();
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureDirectory = join(repositoryRoot, "evals", "fixtures", "online_amt_runtime");
 const MAXIMUM_SCORE_ERROR = 2e-4;

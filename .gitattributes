@@ -1,0 +1,10 @@
+# Line endings are part of these files' identity: the model, the worklet, and the
+# model's licence notice are checked against frozen SHA-256 digests, and the
+# runtime fixture is compared byte for byte. A Windows checkout must not rewrite
+# any of them, so none of them is left to Git's text-or-binary guess.
+* text=auto eol=lf
+
+assets/models/online_amt_streaming.onnx binary
+assets/models/online_amt.LICENSE.txt -text
+assets/worklets/online-amt-capture.js -text
+evals/fixtures/online_amt_runtime/* binary
