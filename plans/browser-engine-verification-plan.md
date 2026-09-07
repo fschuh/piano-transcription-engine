@@ -2,7 +2,8 @@
 
 > **Status:** Proposed, September 7, 2026.
 >
-> **Owner repository:** `piano-transcription-engine`.
+> **Owner repository:** `piano-transcription-engine`. Task 07 lands in
+> `sheet-music-viewer`.
 >
 > **Prompted by:** the Windows defects found by the extraction's manual listen
 > smoke, and by the observation that this package is now a web library whose
@@ -30,6 +31,11 @@ WebView2 (Chromium) on Windows, WKWebView (WebKit) on macOS, and WebKitGTK
 and neither has ever executed this package. Nothing this project ships runs
 Gecko, so Firefox is worth adding only if the package gains outside consumers.
 
+Cover both sides of the dependency. The engine's own jobs catch a defect at its
+source, but only the viewer's jobs prove that the pinned revision installs from
+GitHub, that the asset preparation finds it, and that the application builds. The
+Windows failure that prompted this plan surfaced there, not in the engine.
+
 Keep browser automation out of `package.json`. npm installs this package's
 devDependencies transiently in order to run `prepare` when a consumer installs it
 from Git, so anything added there is downloaded during every consumer install
@@ -45,6 +51,8 @@ it safe to pin as a bare Git dependency. CI installs what it needs itself.
 - Localise a failure to a layer without further investigation, using the parity
   check's existing separation of model output from decoded output.
 - Leave consumer install cost unchanged.
+- Check the viewer's side of the dependency, not only the engine's, since that is
+  where a consumer meets a defect.
 
 ## Non-goals
 
@@ -56,11 +64,17 @@ it safe to pin as a bare Git dependency. CI installs what it needs itself.
   whatever a run produced is not a check.
 - Do not add CI to the private recording repository. Its value is the corpus, its
   inventory is fast to run locally, and putting private recordings through hosted
-  runners is a decision that needs its own justification.
+  runners is a decision that needs its own justification. It is also the only one
+  of the three that is private, so it is the only one whose runner minutes would
+  be billed.
 - Do not replace the Chrome DevTools driver. It works, it has no dependencies,
   and Chrome remains the reference engine.
 
 ## What runs where
+
+Neither repository has any workflow today.
+
+In `piano-transcription-engine`:
 
 | Trigger | Platform | Engine | Checks |
 | --- | --- | --- | --- |
@@ -69,15 +83,30 @@ it safe to pin as a bare Git dependency. CI installs what it needs itself.
 | Every push and pull request | Linux | Chrome | `eval:browser-parity` |
 | Scheduled and on demand | Linux | WebKit | `eval:browser-parity` |
 | Scheduled and on demand | Windows | Chrome | `eval:browser-parity` |
-| Scheduled and on demand | macOS | WebKit | `eval:browser-parity` |
+| Scheduled and on demand | macOS | WebKit | `npm test`, `eval:browser-parity` |
 | Scheduled and on demand | — | — | Cross-job comparison of the recorded results |
 
-Windows earns a push-gated slot because every defect found so far lived there and
-because `npm ci` is the check that finds them. macOS earns a scheduled slot
-because ARM64 is a different architecture and therefore the most likely source of
-a genuine numeric difference; it is also the most expensive runner on private
-repositories, at a ten-times minute multiplier against Linux's one and Windows's
-two. This repository is public, so hosted runners are free for it today.
+In `sheet-music-viewer`:
+
+| Trigger | Platform | Checks |
+| --- | --- | --- |
+| Every push and pull request | Linux | `npm ci`, `npm test`, `npm run build` |
+| Every push and pull request | Windows | `npm ci`, `npm test`, `npm run build` |
+
+Windows earns a push-gated slot in both repositories because every defect found so
+far lived there and because installing is the check that finds them.
+
+macOS earns a scheduled slot because ARM64 is a different architecture and
+therefore the most likely source of a genuine numeric difference. It runs
+`npm test` as well as the parity check, because the unit suite replays the
+180-frame runtime fixture through ONNX in Node: that answers the architecture
+question directly, more cheaply than through a browser, and the runner is already
+paid for by the parity leg.
+
+Both repositories are public, so hosted runners are free for them. The private
+recording repository is not in scope, which the non-goals cover; on a private
+repository Windows minutes bill at twice Linux and macOS at ten times, so that
+exclusion is a cost decision as well as a data-handling one.
 
 ## Why the cross-job comparison matters
 
@@ -183,6 +212,30 @@ Acceptance:
 - A reader can tell which engines were verified, on which platforms, and when.
 - If an engine failed, the record says whether the cause was ONNX Runtime's WASM
   numerics or this package's decoder, using the failing hash to place it.
+
+### Task 07 — Check the viewer's integration on both platforms
+
+Add a workflow to `sheet-music-viewer` running Linux and Windows: `npm ci`,
+`npm test`, and `npm run build` in `webapp`.
+
+Engine CI catches a defect at its source; this catches it where a consumer meets
+it. Nothing today checks that the pinned Git dependency resolves from GitHub,
+that `prepare:listen-assets` finds the installed package's model and worklet, or
+that the application builds — which is exactly the path that broke on Windows,
+and exactly what a bad pin bump would break. It needs no secrets, because the
+engine repository is public.
+
+Expect it to be slower than the engine's jobs: every run clones the engine with
+its 69 MB model and pulls the sixteen sample packages that `prepare:piano-assets`
+expands into 480 files.
+
+Acceptance:
+
+- Both legs pass on the current head.
+- Pointing the dependency at an engine revision that fails its own build fails
+  this workflow rather than producing a broken application.
+- The generated listen assets match the installed package's bytes, which the
+  digest test from Task 01 covers once the viewer's build has run.
 
 ## What a failure would mean
 
