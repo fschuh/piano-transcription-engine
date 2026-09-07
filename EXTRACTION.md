@@ -1,9 +1,8 @@
 # Extraction report
 
-> **Status:** Pending the manual listen-mode smoke. Every automated check below
-> passed on September 6, 2026; the manual smoke on real input has not been run,
-> so the extraction is not yet declared complete and Round 3 planning has not
-> been unblocked.
+> **Status:** Complete, September 7, 2026. Every automated check below passed on
+> September 6, and the manual listen-mode smoke ran on a real piano on Windows on
+> September 7. Round 3 planning is unblocked.
 
 The production listen engine, its canonical online-AMT model, and the reusable
 evaluation code moved out of `sheet-music-viewer` into this repository between
@@ -33,22 +32,22 @@ scoring of its own.
 
 | | |
 | --- | --- |
-| Engine commit | `d226f690d4be7842e54fa6b22a5e2f59bcb5a698` |
-| Adopted by viewer commit | `cd8457f50be4abade7fe0563d882f2d065d940e9` |
-| Adopted by eval commit | `5b9863801d34d45a1aee87ece1bfe87bf489322d` |
+| Engine commit | `1cb9baa8f3153388416d7d580bfcd9b8bac2a165` |
+| Adopted by viewer commit | `5ced96c8919c8c4773da276b66459f0e7413235f` |
+| Adopted by eval commit | `73c481f2a67d34993f5934e8e206683c12badaea` |
 | Pre-extraction baseline | viewer commit `89afafcdd7fd06db0626feba6a0665ab1c3bf798` |
 | Production model | `online_amt_streaming.onnx`, 71,955,821 bytes, SHA-256 `a77be826…90ac4`, exported from `jdasam/online_amt` at `f353035175cc3436ebdc411530a9e73c966d2077` |
 | Production default profile | `baseline-v1` in registry version 2 |
 | Runtime | `onnxruntime-web` 1.27.0 exactly, one WASM thread, sequential execution |
 
 Both consumers pin that one full commit SHA. Neither follows a branch or a tag.
-`d226f69` is the revision every check below was run against and the revision both
-consumers install. Documentation commits follow it, so this repository's head and
+`1cb9baa` is the revision both consumers install and the revision the commands
+below pass at. Documentation commits follow it, so this repository's head and
 that revision do not produce byte-identical package tarballs — the packaged
 README differs. What is identical is everything that runs: the compiled code, the
 type declarations, and the assets. That is why a documentation commit does not
-move the pin, and why a commit touching `src/` or `assets/` does, qualified by
-re-running the commands below.
+move the pin, and why a commit touching `src/`, `assets/`, or the tooling that
+`prepare` runs does, qualified by re-running the commands below.
 
 ## What was archived rather than ported
 
@@ -108,3 +107,10 @@ npm run build
 Then the manual listen-mode smoke — start, target changes, advancement, pause,
 resume, stop, and microphone denial — on real input. No automated check replaces
 it, and it is still required before the production matcher profile changes.
+
+Run an install and a build on Windows as well when a change touches how tooling
+handles paths. Neither repository checks Windows automatically, and the
+extraction's only platform defect was exactly that: this verifier compared
+Windows path separators against a POSIX literal, so the canonical-model check
+failed inside `prepare` and the viewer could not install its dependency there
+while every check on Linux passed.
