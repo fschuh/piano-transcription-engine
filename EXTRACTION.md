@@ -32,16 +32,16 @@ scoring of its own.
 
 | | |
 | --- | --- |
-| Engine commit | `1cb9baa8f3153388416d7d580bfcd9b8bac2a165` |
-| Adopted by viewer commit | `5ced96c8919c8c4773da276b66459f0e7413235f` |
-| Adopted by eval commit | `73c481f2a67d34993f5934e8e206683c12badaea` |
+| Engine commit | `cd485c67b4f08c3e3cce5804a950367af73b866c` |
+| Adopted by viewer commit | `4f2acea` |
+| Adopted by eval commit | `575d3b7` |
 | Pre-extraction baseline | viewer commit `89afafcdd7fd06db0626feba6a0665ab1c3bf798` |
 | Production model | `online_amt_streaming.onnx`, 71,955,821 bytes, SHA-256 `a77be826…90ac4`, exported from `jdasam/online_amt` at `f353035175cc3436ebdc411530a9e73c966d2077` |
 | Production default profile | `baseline-v1` in registry version 2 |
 | Runtime | `onnxruntime-web` 1.27.0 exactly, one WASM thread, sequential execution |
 
 Both consumers pin that one full commit SHA. Neither follows a branch or a tag.
-`1cb9baa` is the revision both consumers install and the revision the commands
+`cd485c6` is the revision both consumers install and the revision the commands
 below pass at. Documentation commits follow it, so this repository's head and
 that revision do not produce byte-identical package tarballs — the packaged
 README differs. What is identical is everything that runs: the compiled code, the
