@@ -1,5 +1,10 @@
 # Extraction report
 
+> **Status:** Pending the manual listen-mode smoke. Every automated check below
+> passed on September 6, 2026; the manual smoke on real input has not been run,
+> so the extraction is not yet declared complete and Round 3 planning has not
+> been unblocked.
+
 The production listen engine, its canonical online-AMT model, and the reusable
 evaluation code moved out of `sheet-music-viewer` into this repository between
 September 2 and September 6, 2026. This is the record of what that produced and
@@ -38,9 +43,12 @@ scoring of its own.
 
 Both consumers pin that one full commit SHA. Neither follows a branch or a tag.
 `d226f69` is the revision every check below was run against and the revision both
-consumers install. This report was written after it and changes no code, so a
-documentation commit that follows it does not move the pin; a commit that changes
-`src/` or `assets/` does, and re-running the commands below is what qualifies it.
+consumers install. Documentation commits follow it, so this repository's head and
+that revision do not produce byte-identical package tarballs — the packaged
+README differs. What is identical is everything that runs: the compiled code, the
+type declarations, and the assets. That is why a documentation commit does not
+move the pin, and why a commit touching `src/` or `assets/` does, qualified by
+re-running the commands below.
 
 ## What was archived rather than ported
 

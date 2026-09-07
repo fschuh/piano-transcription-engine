@@ -1,9 +1,9 @@
 # Piano transcription engine
 
-[EXTRACTION.md](EXTRACTION.md) records what each repository owns, the revision
+[EXTRACTION.md](https://github.com/fschuh/piano-transcription-engine/blob/main/EXTRACTION.md) records what each repository owns, the revision
 both consumers pin, and the commands that qualify a later engine revision.
 Round 1/2 decisions and source provenance are archived in
-[legacy/rounds-1-2](legacy/rounds-1-2/README.md). Historical emitters and verifiers
+[legacy/rounds-1-2](https://github.com/fschuh/piano-transcription-engine/blob/main/legacy/rounds-1-2/README.md). Historical emitters and verifiers
 are non-active; the production default remains `baseline-v1`.
 
 `@fschuh/piano-transcription-engine` owns the reusable online-AMT recognition,

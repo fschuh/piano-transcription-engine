@@ -99,6 +99,28 @@ for (const path of sourceFiles) {
   }
 }
 
+// The README ships inside the package, so every relative link it carries has to
+// resolve there too. Repository-only documents need an absolute URL.
+const manifest = JSON.parse(await readFile(join(repositoryRoot, "package.json"), "utf8"));
+const packagedEntries = manifest.files;
+const readme = await readFile(join(repositoryRoot, "README.md"), "utf8");
+let checkedLinks = 0;
+for (const [, target] of readme.matchAll(/\]\(([^)\s]+)/g)) {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith("#")) continue;
+  const path = target.split("#")[0];
+  checkedLinks += 1;
+  const packaged = packagedEntries.some((entry) => (
+    entry.endsWith("/") ? path.startsWith(entry) : path === entry
+  ));
+  if (!packaged) {
+    throw new Error(
+      `README.md links to ${target}, which the package does not include. ` +
+      "Use an absolute repository URL or add the file to the package allowlist.",
+    );
+  }
+}
+
 console.log(
-  `Verified ${requiredPackageFiles.length} package files and no private recording corpus.`,
+  `Verified ${requiredPackageFiles.length} package files, ${checkedLinks} packaged ` +
+  "README links, and no private recording corpus.",
 );
