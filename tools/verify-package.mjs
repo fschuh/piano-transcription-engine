@@ -1,10 +1,14 @@
 import { readdir, readFile, stat } from "node:fs/promises";
-import { dirname, extname, join, relative, resolve } from "node:path";
+import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { moduleSpecifiersOf } from "./moduleSpecifiers.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// Repository paths are written with POSIX separators here and in package.json,
+// so the Windows separators relative() hands back have to be normalised before
+// any of them is compared or reported.
+const repositoryPath = (absolute) => relative(repositoryRoot, absolute).split(sep).join("/");
 const requiredPackageFiles = [
   "dist/index.js",
   "dist/index.d.ts",
@@ -70,13 +74,13 @@ const privateCorpusFiles = repositoryFiles.filter((path) => (
 if (privateCorpusFiles.length > 0) {
   throw new Error(
     "Private recording/MIDI formats are not allowed in this repository: " +
-    privateCorpusFiles.map((path) => relative(repositoryRoot, path)).join(", "),
+    privateCorpusFiles.map(repositoryPath).join(", "),
   );
 }
 
 const modelFiles = repositoryFiles
   .filter((path) => extname(path).toLowerCase() === ".onnx")
-  .map((path) => relative(repositoryRoot, path));
+  .map(repositoryPath);
 if (
   modelFiles.length !== 1 ||
   modelFiles[0] !== "assets/models/online_amt_streaming.onnx"
@@ -93,7 +97,7 @@ for (const path of sourceFiles) {
     const forbidden = viewerReferences.find((reference) => specifier.includes(reference));
     if (forbidden !== undefined) {
       throw new Error(
-        `${relative(repositoryRoot, path)} imports viewer source (${specifier}).`,
+        `${repositoryPath(path)} imports viewer source (${specifier}).`,
       );
     }
   }
