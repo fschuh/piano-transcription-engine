@@ -123,3 +123,23 @@ export {
   DELIBERATELY_WORSE_SKIPPED_ADVANCE_CONFIGURATION,
   PUBLIC_FUNCTIONAL_EVALUATION_FIXTURES,
 } from "./functionalFixtures.js";
+export {
+  BASELINE_STATE_WEIGHTS,
+  DEFAULT_ATTACK_READOUT,
+  diagnoseRawAttacks,
+  evaluateRecognitionRecording,
+  goldChordDiagnostics,
+  inspectScoreFrame,
+  matchAttacks,
+  meanRecordingMetrics,
+  readTraceAttacks,
+  type Attack,
+  type AttackMatch,
+  type AttackMetrics,
+  type AttackReadoutConfiguration,
+  type GoldMoment,
+  type PitchScoreInspection,
+  type PredictedAttack,
+  type RecognitionRecordingOptions,
+  type StateWeights,
+} from "./recognitionEvaluation.js";

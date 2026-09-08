@@ -354,3 +354,68 @@ copyrighted score annotations, or traces derived from them. Those inputs live in
 the private `piano-transcription-evals` repository and are supplied explicitly to
 the eval API. Only original, public-domain, licensed, or non-musical numeric
 fixtures belong here.
+
+### Raw recognition evaluation (Round 3)
+
+After capture, score a private cached trace without running inference or a matcher:
+
+```sh
+node dist/eval/scoreCli.js --trace /private/trace-directory \
+  --midi /private/reference.mid --protocol /private/protocol.json \
+  --onset-lag-ms 160 --output /private/recognition.json
+```
+
+Choose the fixed onset lag from prior audio/model timing inspection, before
+comparing configurations. The example uses the approximately 160 ms delay observed
+in the Task 01 audit; it is not a universal model constant. Use `0` to score the
+original frame timestamps. The CLI requires this choice explicitly. The API
+`evaluateRecognitionRecording` defaults to zero and accepts `onsetEstimateLagMs`.
+Estimated onset is chunk-end time minus this lag; decision availability always
+remains the original chunk-end time. MIDI alignment is a separate protocol value.
+Neither correction removes buffering from reported causal detection delay.
+
+The report compares production `OnlineAmtOutputDecoder` transition events with
+three causal attack-probability thresholds (0.2, 0.3, 0.4). Each comparison uses
+release threshold 0.15 and minimum per-pitch separation 64 ms. It emits on the
+first eligible frame, adds no lookahead, and rearms only after an active frame
+falls to the release threshold. Suppressed frames cannot rearm it. Sustained high
+attack probability therefore cannot recover another attack. These are diagnostic
+readouts, not promoted decoder settings. Replay includes pre-roll and the fixed
+capture tail; scoring filters estimated onsets to the same half-open audio
+interval and removes excluded regions on both sides. The report separately counts
+references and predictions outside the interval and those excluded within it.
+These disjoint counts plus the scored counts account for every input event. A
+tail decision can match an attack inside the interval, but cannot extend it.
+
+Matching maximizes exact-pitch one-to-one matches within inclusive protocol
+windows (normally ±50 ms and ±100 ms), pairing earliest compatible attacks with
+stable input-index ties. It does not minimize timing error among equally large
+matchings. Reports retain unmatched indices, signed and absolute timing error,
+and decision delay. Empty precision/recall denominators are defined as 1; F1 is 1
+when both sets are empty and 0 when only one is empty. `meanRecordingMetrics`
+averages recordings equally; use it separately for each configuration/window.
+
+`inspectScoreFrame` exposes every pitch's five weighted scores and selected state.
+Active-frame probabilities divide by the known wrapper weights `[1,1,1,2,2]`
+without renormalization; alternate weights may be supplied to the API. This does
+not undo recurrent feedback. Suppressed evidence and `selectedState` are `null`: the
+wrapper holds the previous argmax, so it is not a current-frame measurement.
+`diagnoseRawAttacks` reports nearby attack/presence peaks and suppressed-frame
+counts by default. Add CLI `--raw-frames` (API `includeRawFrames: true`, or the
+final `includeFrames` argument to `diagnoseRawAttacks`) to include per-frame
+evidence, competing pitches and selected states. Compact reports omit the
+`frames` property entirely. Its window centers on reference time plus
+the fixed onset lag. Peaks are explicitly optimistic reference-informed evidence,
+not detected attacks. Frame inspection also supports unplayed-pitch and verified
+no-attack interval analysis; silence is scored with empty references only where
+silence has been verified.
+
+For gold chord diagnostics, pass `--gold-moments /private/moments.json`, an array
+of `{ "onsetMs": 100, "pitches": [60, 64] }` objects in MIDI time. Moments name
+exact reference onsets, in chronological order; rolled attacks should retain
+separate onsets. The report lists recovered pitches and complete chords, and
+marks consecutive identical pitch sets as repeated chords using the full performed
+sequence before interval/exclusion filtering. Removing a moment cannot manufacture
+a repeat. The API accepts the same `goldMoments` data. No gold chord claims are generated without these groups.
+Zero observed false attacks is a finite-recording result. Corpus baseline runs,
+annotation review and performance conclusions belong to Task 03.

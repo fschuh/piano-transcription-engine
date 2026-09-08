@@ -12,7 +12,8 @@
   "types": "./dist/index.d.ts",
   "bin": {
     "piano-transcription-eval": "./dist/eval/inventoryCli.js",
-    "piano-transcription-capture": "./dist/eval/captureCli.js"
+    "piano-transcription-capture": "./dist/eval/captureCli.js",
+    "piano-transcription-score": "./dist/eval/scoreCli.js"
   },
   "exports": {
     ".": {

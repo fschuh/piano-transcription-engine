@@ -1,7 +1,7 @@
 # Round 3: Online AMT recognition limits and decoder calibration
 
 > **Status:** In progress. Proposed September 7, 2026; Task 01 completed
-> September 8, 2026. Tasks 02 to 07 have not begun.
+> September 8, 2026. Task 02 completed September 8, 2026; Tasks 03 to 07 have not begun.
 >
 > **Code:** `piano-transcription-engine`.
 >
@@ -338,6 +338,21 @@ Done when tests demonstrate that an extra/missing MIDI attack changes only its
 local match, subsequent events still match, and one prediction cannot satisfy two
 attacks. Test false attacks, repeats, timing boundaries, silence, and empty event
 sets. Compare raw evidence and decoder output without matcher involvement.
+
+**Complete, September 8, 2026.** The engine eval API now provides weighted and
+unweighted frame inspection, suppressed-evidence labels, reference-informed raw
+attack diagnostics, maximum one-to-one event scoring, and gold complete/repeated
+chord diagnostics. `piano-transcription-score` compares shipped decoder events
+with three causal hysteresis thresholds from cached traces and caller MIDI and
+protocol files. It records exclusions, both timing windows, and separate onset
+error and decision delay. A fixed onset-lag estimate is an explicit CLI input,
+separate from annotation alignment; the original availability clock is retained.
+Synthetic tests cover local annotation errors, one-to-one repeats and ties,
+false attacks, timing boundaries, silence/empty sets, causal replay, suppression,
+chords, exclusions, pre-roll, tail handling and latency. Build and the full test
+suite pass. No corpus performance claim is made; baseline reporting remains
+Task 03. See the README's raw recognition evaluation section for usage and exact
+readout/matching conventions.
 
 ### Task 03 — Produce the baseline report and annotation review queue
 
