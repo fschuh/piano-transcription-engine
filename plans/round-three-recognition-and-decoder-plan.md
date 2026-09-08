@@ -1,6 +1,7 @@
 # Round 3: Online AMT recognition limits and decoder calibration
 
-> **Status:** Proposed, September 7, 2026. Extraction is complete; experiments have not begun.
+> **Status:** In progress. Proposed September 7, 2026; Task 01 completed
+> September 8, 2026. Tasks 02 to 07 have not begun.
 >
 > **Code:** `piano-transcription-engine`.
 >
@@ -302,6 +303,28 @@ Done when one gold take and one development silver recording run end to end,
 preserving timestamps/state and producing inspectable raw scores. Test conversion
 timing and runner edge cases with original synthetic audio. No recognition
 performance claim is needed at this stage.
+
+**Complete, September 8, 2026.** All twenty-two recordings the protocol names run
+end to end and their raw traces are cached, past the one gold take and one silver
+recording this asked for. The protocol is adopted as private caller data; the
+private `reports/round-three/task-01-protocol.md` records what was measured to
+choose each of its values and is the place to change them.
+
+Three results bear on the tasks that follow:
+
+- The model's causal detection delay is about 160 ms and barely moves across the
+  five gold speeds. A fixed window applied to raw frame times would therefore
+  match almost nothing, so Task 02 has to state the onset time its readout
+  estimates and report detection delay separately, without folding the delay into
+  the protocol's annotation alignment offset.
+- One silver recording's reference onsets sit about 34 ms early, and four more
+  recordings have alignment this model-free check could not establish. All are
+  handed to the Task 03 review queue rather than corrected on an unverified
+  measurement.
+- The conversion path had been feeding the stereo gold takes 3 dB above both the
+  mono silver recordings and what the live capture worklet would produce. It now
+  averages channels as the worklet does, so the gold takes' recorded levels, and
+  the apparent over-range samples in the two fastest ones, are superseded.
 
 ### Task 02 — Implement raw diagnostics and event scoring
 
