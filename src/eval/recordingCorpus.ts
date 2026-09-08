@@ -125,6 +125,17 @@ function basenameWithoutExtension(path: string): string {
 }
 
 /**
+ * The stable id of one recording: its audio path under the corpus root without
+ * the extension, such as `silver/<name>` or `gold/<setup>/<take>`.
+ *
+ * A private protocol, a cached trace, and a report all name a recording this
+ * way, so the same string identifies it everywhere without a lookup table.
+ */
+export function recordingIdOfAudioFile(audioFile: string): string {
+  return basenameWithoutExtension(audioFile.replaceAll("\\", "/"));
+}
+
+/**
  * Reads the descriptive `key: value` lines of a setup metadata file.
  *
  * A nested or list-valued document is rejected rather than partly understood,

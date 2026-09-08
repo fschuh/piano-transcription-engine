@@ -29,10 +29,14 @@ npm run eval:inventory -- [recordings-directory]
 npm pack --dry-run
 ```
 
+Two commands are installed as binaries, which is how the private corpus
+repository invokes them: `piano-transcription-eval` validates a corpus and
+`piano-transcription-capture` runs recordings through the model. Only the
+capture command decodes audio, and it is the only thing here that needs a local
+FFmpeg install.
+
 With no recordings directory, `eval:inventory` inspects the public-safe
-`evals/fixtures` directory. The command is also installed as the
-`piano-transcription-eval` binary, which is how the private corpus repository
-invokes it:
+`evals/fixtures` directory:
 
 ```text
 piano-transcription-eval ./recordings --annotations ./annotations/<file>.json
@@ -50,6 +54,118 @@ Score annotations are **caller data**. This repository contains no score
 sequence, no recording, and no annotation of its own: the private repository
 passes its annotation file in at run time, and every check compares a take
 against what it was given.
+
+## Offline capture
+
+```text
+piano-transcription-capture ./recordings --protocol ./protocol/<file>.json \
+  --traces ./traces --wasm ./node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm
+```
+
+`piano-transcription-capture` decodes each recording the protocol names, runs it
+through the production `OnlineAmtSession` in order, and caches the raw model
+output so later work replays the same frames instead of re-running inference.
+Every path is the caller's: the recordings, the protocol, the trace cache, and
+ONNX Runtime's WASM binary, which this package still does not resolve for its
+consumer. `--model` defaults to the packaged canonical model, and `--recording`
+and `--role` select a subset.
+
+### When a cached trace may stand in for a capture
+
+A trace is reused only when it answers the request that was made. Before the
+cache is consulted the run establishes what the model would see — the model's
+digest, the recording's own bytes, the sample rate and chunk size, the input
+gain, and the tail flush — and a cached trace that differs in any of them is
+refused, naming every difference. Reusing one would compare two configurations
+while reporting one, which is worse than the capture it saved. Capture into a
+different `--traces` directory to keep both, or pass `--force` to replace the
+cached trace.
+
+Two things a digest cannot settle are reported rather than enforced: a reused
+trace captured by a different engine build, and one decoded by a different
+converter version. Matching builds are required for a claimed production
+comparison, not for every research experiment, so the run says which traces
+those are and leaves the judgement to the caller.
+
+### Which engine build captured a trace
+
+A package version does not identify code — several revisions share one, and a
+working tree can differ from every revision that exists — so every trace records
+the revision as well.
+
+The two sources are not equal, and a measurement wins. When this package is its
+own checkout, that checkout is read directly: it is the code that actually ran,
+and it also establishes whether the tree carried uncommitted changes. An
+installed package cannot be measured — npm does not leave the revision inside
+it, and this package will not guess — so a consumer passes the revision it
+pinned with `--engine-revision`, and that is used only where there is nothing to
+measure. A caller cannot know that the working tree in front of it differs from
+the pin it names, so its claim never overwrites the checkout; it is recorded
+alongside, and a claim that disagrees is reported rather than lost. Each trace
+says which source its revision came from, so a caller-supplied one stays legible
+as self-reported.
+
+A run reports what it cannot vouch for. It says when the traces it wrote came
+from a tree with uncommitted changes or from a build with no revision at all —
+the first case being the one that matters most, since that code exists nowhere
+else. Reused traces are judged on the provenance they carry rather than on the
+build doing the reusing, so a clean checkout cannot launder evidence a dirty one
+produced at the same commit, and a matching revision string is not enough to
+make a trace attributable.
+
+An evaluation protocol is caller data in the same way an annotation is. The
+engine owns `parseEvaluationProtocol`, which fixes the shape — the gold takes,
+the development/confirmation split, the onset windows and alignment offsets, the
+scored and excluded intervals, the intervals noise may be estimated from, the
+baseline capture settings, and the experiment budget — and refuses a document
+that assigns one recording twice, names a recording it did not assign, gives a
+supplemental window narrower than the primary one, or asks for a tail flush that
+is not a whole number of model chunks. The recordings and their ids stay in the
+private repository.
+
+### The conversion path
+
+Decoding needs FFmpeg on the local machine. It is a prerequisite of evaluation
+only: it is not a package dependency, `prepare` does not install it, and no
+production module reaches the code that spawns it. One fixed argument list
+converts every recording, and it neither normalizes, filters, trims, nor
+re-times anything:
+
+```text
+ffmpeg -nostdin -hide_banner -loglevel error -i <recording> -map 0:a:0 -vn \
+  -ar 16000 -f wav -acodec pcm_f32le -
+```
+
+The channels are averaged to mono here rather than by `-ac 1`. FFmpeg's
+stereo-to-mono rematrix is energy preserving — it sums the pair scaled by
+1/sqrt(2), which is 3 dB above the average for correlated channels — while a
+file that is already mono passes through untouched, so a corpus holding both
+would be measured at two different levels. Averaging in the engine also
+reproduces what the capture worklet does with a live input device, so an offline
+trace and a live session hear the same signal.
+
+### What a trace holds
+
+A trace is a directory of typed-array files beside one metadata document:
+`scores.f32` (five state scores for each of 88 pitches per frame), `states.u8`
+(the selected state per pitch), `signal-active.u8`, and `inference-ms.f32`, all
+in frame order. The metadata identifies the artifact and the build that produced it — the engine
+package, version, and revision, the model's digest and size, the converter and
+its version, the recording's own digest, level, and channel count, the input
+gain, and the framing — and states how a frame index becomes an audio time. Frame `i` covers samples
+`[i*512, i*512+512)` and its `capturedAtMs` is the time of its **last** sample,
+the same convention the capture worklet posts with each live chunk, so an
+offline measurement and a live one time the same decision alike.
+
+Samples that were not in the recording are counted, never hidden: the zeros that
+complete the final chunk of input are reported as `paddedSampleCount`, and the
+fixed silent tail flush as `tailFlushSampleCount`. The default flush is 2,048
+samples, the model's own mel window, which is exactly what the last real sample
+needs to sit fully inside a mel frame and no more.
+
+`readOnlineAmtTrace` recomputes each array's digest from the bytes on disk and
+compares it against the metadata, so a truncated, swapped, or edited trace is
+refused rather than replayed as evidence.
 
 Git installation runs `prepare`, which builds JavaScript and declarations into
 `dist`. A checkout therefore needs a supported Node/npm toolchain during
