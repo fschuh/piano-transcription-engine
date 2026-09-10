@@ -419,3 +419,44 @@ sequence before interval/exclusion filtering. Removing a moment cannot manufactu
 a repeat. The API accepts the same `goldMoments` data. No gold chord claims are generated without these groups.
 Zero observed false attacks is a finite-recording result. Corpus baseline runs,
 annotation review and performance conclusions belong to Task 03.
+
+Annotation review uses `createAnnotationReviewQueue(report, trace)` or the score
+CLI's `--review-output FILE`. Each unresolved entry includes audio replay bounds,
+MIDI pitch/name, nearby references and predictions, shared readout IDs, and
+weighted/unweighted frame evidence with selected states and competing pitches.
+The queue groups exact event identities across readouts and prioritizes shared
+disagreements. Nearby timing or pitch substitutions are possibilities, not edits;
+shared model evidence is not independent annotation verification.
+
+`applyAnnotationCorrections(references, edits)` (CLI: `--corrections FILE`, a JSON
+array) applies reviewed additions, replacements, and deletions before evaluating
+all readouts. Each edit requires `verifiedBy`, `reason`, and `replacement`
+(`{midi, onsetMs}` in original MIDI time, or `null` for deletion). An indexed edit
+also requires `referenceIndex` in the **original** parsed MIDI and `original:
+{midi, onsetMs}` to detect a stale sidecar. Additions omit both fields. Keep the
+original MIDI in version control, retain reports before editing, and regenerate
+all compared configurations against the same sidecar/protocol. Label-only edits
+reuse inference. Protocol exclusions remove both sides consistently.
+
+Gold chord moments may supply `pitchOnsetsMs`, parallel to `pitches`, to preserve
+the individual performed onsets of a rolled chord. The moment onset groups the
+chord; it does not replace per-pitch attack timing. Gold status is a separate
+human annotation decision: record the verifier, passage, and dimensions only
+after full passage verification, including attacks absent from both model and
+reference. Clearing the queue alone does not promote silver or verify releases.
+
+Review export evidence identifies `eventSource` as `reference` or `prediction`;
+`optimisticReferenceInformed` is false for prediction-centered evidence.
+`applyAnnotationCorrections` returns uniform `{midi, onsetMs, annotationSource}`
+records. Source metadata preserves the original MIDI index, complete original
+caller record, and applied sidecar index. Alignment moves only the evaluated
+onset, so source fields can be copied into a correction guard without arithmetic.
+Original release/channel metadata remains archived under the source, not silently
+reinterpreted as corrected release timing. Additions have null original source.
+Queue ordering uses shared-readout count descending, then actual event time.
+
+Correction validation rejects repeated `(midi, onsetMs)` identities in the final
+assembled references, including collisions caused by replacements. The error
+names the duplicate identity. Deletions and moves can free an identity for an
+addition in the same sidecar, regardless of edit order. Distinct repeated attacks
+and simultaneous different pitches remain valid.

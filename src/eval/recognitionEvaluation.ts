@@ -360,6 +360,8 @@ export function diagnoseRawAttacks(
 export interface GoldMoment {
   onsetMs: number;
   pitches: readonly number[];
+  /** Per-pitch performed onsets for rolled chords; defaults to the moment onset. */
+  pitchOnsetsMs?: readonly number[];
 }
 
 export function goldChordDiagnostics(
@@ -385,8 +387,12 @@ export function goldChordDiagnostics(
     if (!moment.pitches.length || new Set(moment.pitches).size !== moment.pitches.length) {
       throw new Error("Gold moments require distinct pitches.");
     }
-    const referenceIndices = moment.pitches.map((midi) =>
-      references.findIndex((ref) => ref.midi === midi && ref.onsetMs === moment.onsetMs));
+    if (moment.pitchOnsetsMs && (moment.pitchOnsetsMs.length !== moment.pitches.length ||
+      moment.pitchOnsetsMs.some((time) => !Number.isFinite(time)))) {
+      throw new Error("Gold pitch onsets must be finite and correspond to every pitch.");
+    }
+    const referenceIndices = moment.pitches.map((midi, i) =>
+      references.findIndex((ref) => ref.midi === midi && ref.onsetMs === (moment.pitchOnsetsMs?.[i] ?? moment.onsetMs)));
     const recoveredPitches = moment.pitches.filter((_, i) => matched.has(referenceIndices[i]!));
     return {
       ...moment,
@@ -433,6 +439,7 @@ export function evaluateRecognitionRecording(
   const moments = options.goldMoments?.map((moment) => ({
     ...moment,
     onsetMs: moment.onsetMs + offset,
+    ...(moment.pitchOnsetsMs ? { pitchOnsetsMs: moment.pitchOnsetsMs.map((time) => time + offset) } : {}),
   }));
   const readouts = options.readouts ?? [0.2, 0.3, 0.4].map((threshold) => ({
     ...DEFAULT_ATTACK_READOUT,

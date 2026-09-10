@@ -1,7 +1,7 @@
 # Round 3: Online AMT recognition limits and decoder calibration
 
 > **Status:** In progress. Proposed September 7, 2026; Task 01 completed
-> September 8, 2026. Task 02 completed September 8, 2026; Tasks 03 to 07 have not begun.
+> September 8, 2026. Task 02 completed September 8, 2026; Task 03 completed September 8, 2026; Tasks 04 to 07 have not begun.
 >
 > **Code:** `piano-transcription-engine`.
 >
@@ -368,6 +368,24 @@ Done when the baseline report identifies which knobs have plausible value and
 which cases appear limited by absent or ambiguous evidence. This is the first
 review milestone and determines the experiment order; do not build all possible
 knobs in advance.
+
+**Complete, September 8, 2026.** All five gold and twelve development silver
+recordings were recaptured from committed engine code and scored with the shipped
+decoder and the three predeclared causal readouts. The private
+`reports/round-three/task-03-baseline.md` interprets the per-recording measurements,
+timing sensitivity, level/noise, gold chord/repeat failures and false-attack
+tradeoffs, and sets the next experiment order. Confirmation remains separate.
+The shared eval API exports timestamped annotation review evidence and applies
+human-reviewed correction sidecars before rescoring every configuration; private
+commands export replayable CSV queues and detailed evidence. Gold chord grouping
+now preserves each pitch's performed MIDI onset. Synthetic tests cover stale
+and duplicate final-reference identities, reuse of identities freed by edits,
+consistent rescoring, review neighborhoods
+and classifications, shared-count/event-time ordering, evidence source labels,
+original MIDI provenance through alignment, and rolled-chord alignment. The
+private decode-guard test checks converter and sample-clock compatibility.
+Manual alignment/annotation concerns remain explicitly unresolved, with no
+corrections or promotions claimed. No hypothesis cycle has been run.
 
 ### Task 04 — Run the bounded adaptive experiments
 

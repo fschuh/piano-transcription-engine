@@ -143,3 +143,11 @@ export {
   type RecognitionRecordingOptions,
   type StateWeights,
 } from "./recognitionEvaluation.js";
+
+export {
+  applyAnnotationCorrections,
+  createAnnotationReviewQueue,
+  midiPitchName,
+  type AnnotationCorrection,
+  type ReviewedAttack,
+} from "./annotationReview.js";
