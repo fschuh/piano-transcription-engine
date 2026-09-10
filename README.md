@@ -428,9 +428,18 @@ The queue groups exact event identities across readouts and prioritizes shared
 disagreements. Nearby timing or pitch substitutions are possibilities, not edits;
 shared model evidence is not independent annotation verification.
 
-`applyAnnotationCorrections(references, edits)` (CLI: `--corrections FILE`, a JSON
-array) applies reviewed additions, replacements, and deletions before evaluating
-all readouts. Each edit requires `verifiedBy`, `reason`, and `replacement`
+A **correction sidecar** is a reviewed edit list stored beside a source MIDI file
+rather than inside it: the annotation stays byte-identical in version control
+while accepted edits live separately, so they can be read, reverted, and
+re-applied on their own. Each edit therefore addresses the *original* parsed MIDI
+and repeats the value it expects to find there, never an index into an
+already-corrected array.
+
+`applyAnnotationCorrections(references, edits)` (CLI: `--corrections FILE`)
+applies one sidecar's additions, replacements, and deletions before evaluating
+all readouts. The engine reads one recording's edits as a bare JSON array; a
+caller keeping several recordings in one file selects that recording's array
+itself. Each edit requires `verifiedBy`, `reason`, and `replacement`
 (`{midi, onsetMs}` in original MIDI time, or `null` for deletion). An indexed edit
 also requires `referenceIndex` in the **original** parsed MIDI and `original:
 {midi, onsetMs}` to detect a stale sidecar. Additions omit both fields. Keep the
@@ -456,7 +465,13 @@ reinterpreted as corrected release timing. Additions have null original source.
 Queue ordering uses shared-readout count descending, then actual event time.
 
 Correction validation rejects repeated `(midi, onsetMs)` identities in the final
-assembled references, including collisions caused by replacements. The error
-names the duplicate identity. Deletions and moves can free an identity for an
-addition in the same sidecar, regardless of edit order. Distinct repeated attacks
-and simultaneous different pitches remain valid.
+assembled references, including collisions caused by replacements. Review entries
+are keyed by that identity, so two references sharing one collapse into a single
+queue entry: one disagreement disappears from the queue, the survivor reports
+more readouts than were compared, and its provenance names only the first of the
+two. Refusing the sidecar is loud where losing a review entry would be silent.
+The error names the duplicate identity. Deletions and moves can free an identity
+for an addition in the same sidecar, regardless of edit order. Distinct repeated
+attacks and simultaneous different pitches remain valid. Because the check reads
+the assembled result, it also refuses a duplicate already present in an unedited
+annotation, when no sidecar was supplied at all.

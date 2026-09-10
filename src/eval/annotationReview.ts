@@ -77,6 +77,9 @@ export function applyAnnotationCorrections(
       },
     }];
   }), ...added.map((a) => ({ ...a }))];
+  // Review entries are keyed by identity, so a repeat would merge two disagreements into
+  // one entry claiming more readouts than were compared. Refuse the edit set: a rejected
+  // sidecar is visible, a review entry lost inside the queue is not.
   const identities = new Set<string>();
   for (const attack of corrected) {
     const key = identity(attack);
