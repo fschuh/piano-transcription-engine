@@ -176,13 +176,13 @@ test("reviewed additions reject duplicate identities before scoring", () => {
   const original = [{ midi: 60, onsetMs: 300 }];
   const verified = { verifiedBy: "Listener", reason: "Synthetic attack review" };
   const add = (midi: number, onsetMs: number) => ({ ...verified, replacement: { midi, onsetMs } });
-  assert.throws(() => applyAnnotationCorrections(original, [add(60, 300)]), /Duplicate corrected reference attack:/);
+  assert.throws(() => applyAnnotationCorrections(original, [add(60, 300)]), /Duplicate reference attack identity:/);
   assert.throws(() => applyAnnotationCorrections(original, [add(62, 400), add(62, 400)]),
-    /Duplicate corrected reference attack:/);
+    /Duplicate reference attack identity:/);
   const replace = { ...verified, referenceIndex: 0, original: original[0]!,
     replacement: { midi: 62, onsetMs: 400 } };
   for (const edits of [[replace, add(62, 400)], [add(62, 400), replace]]) {
-    assert.throws(() => applyAnnotationCorrections(original, edits), /Duplicate corrected reference attack:/);
+    assert.throws(() => applyAnnotationCorrections(original, edits), /Duplicate reference attack identity:/);
   }
   // Distinct repeated attacks and simultaneous different pitches remain valid.
   assert.deepEqual(applyAnnotationCorrections(original, [add(60, 301), add(62, 300)])
@@ -197,14 +197,14 @@ test("final reference validation catches replacement collisions and allows freed
     ...verified, referenceIndex, original: original[referenceIndex]!, replacement,
   });
   assert.throws(() => applyAnnotationCorrections(original, [replace(1, original[0]!)]),
-    /Duplicate corrected reference attack: 60:100\./);
+    /Duplicate reference attack identity: 60:100\./);
   const destination = { midi: 64, onsetMs: 500 };
   for (const edits of [
     [replace(0, destination), replace(1, destination)],
     [replace(1, destination), replace(0, destination)],
   ]) {
     assert.throws(() => applyAnnotationCorrections(original, edits),
-      /Duplicate corrected reference attack: 64:500\./);
+      /Duplicate reference attack identity: 64:500\./);
   }
   const addition = { ...verified, replacement: original[0]! };
   for (const change of [replace(0, null), replace(0, destination)]) {
@@ -223,5 +223,5 @@ test("final reference validation catches replacement collisions and allows freed
     [replace(0, original[1]!), replace(1, original[0]!)])
     .map((a) => a.annotationSource.referenceIndex), [1, 0]);
   assert.throws(() => applyAnnotationCorrections([original[0]!, original[0]!], []),
-    /Duplicate corrected reference attack: 60:100\./);
+    /Duplicate reference attack identity: 60:100\./);
 });

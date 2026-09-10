@@ -83,7 +83,7 @@ export function applyAnnotationCorrections(
   const identities = new Set<string>();
   for (const attack of corrected) {
     const key = identity(attack);
-    if (identities.has(key)) throw new Error(`Duplicate corrected reference attack: ${key}.`);
+    if (identities.has(key)) throw new Error(`Duplicate reference attack identity: ${key}.`);
     identities.add(key);
   }
   return corrected.sort((a, b) => a.onsetMs - b.onsetMs || a.midi - b.midi);
