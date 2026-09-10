@@ -150,6 +150,12 @@ test("review neighborhoods classify both sides and order by shared count then ac
   assert.equal("reference" in predicted.evidence, false);
   assert.equal(late.evidence.eventSource, "reference");
   assert.equal(late.evidence.optimisticReferenceInformed, true);
+  // Signed distance to the closest opposite-side neighbour, nearest of several.
+  assert.deepEqual([late.nearestSamePitchMs, late.nearestOtherPitchMs], [0, 120]);
+  assert.deepEqual([refs[0]!.nearestSamePitchMs, refs[0]!.nearestOtherPitchMs], [null, 100]);
+  assert.deepEqual([predicted.nearestSamePitchMs, predicted.nearestOtherPitchMs], [-80, null]);
+  assert.deepEqual([substitution.nearestSamePitchMs, substitution.nearestOtherPitchMs],
+    [null, -120]);
   // The first two single-readout events are inside the replay-start clamp;
   // sorting by replay.startMs would lose their actual chronological ordering.
   const singles = queue.filter((q) => q.sharedConfigurationCount === 1);
@@ -224,4 +230,34 @@ test("final reference validation catches replacement collisions and allows freed
     .map((a) => a.annotationSource.referenceIndex), [1, 0]);
   assert.throws(() => applyAnnotationCorrections([original[0]!, original[0]!], []),
     /Duplicate reference attack identity: 60:100\./);
+});
+
+test("nearest offsets take the closest neighbour and break ties toward the earlier", async () => {
+  const trace = await captureOnlineAmtTrace({ reset() {}, async run() {
+    return { scores: new Float32Array(440), states: new Uint8Array(88),
+      signalActive: false, inferenceTimeMs: 1 };
+  } }, new Float32Array(96000), { tailFlushSamples: 0 });
+  const references = [{ midi: 60, onsetMs: 1000 }, { midi: 60, onsetMs: 5000 }];
+  // Each pair is listed farther-first, so neither a signed sort nor a stable sort
+  // alone can produce the expected offset.
+  const predictions = [
+    { midi: 60, onsetMs: 800, availableAtMs: 960 },
+    { midi: 60, onsetMs: 1030, availableAtMs: 1190 },
+    { midi: 60, onsetMs: 5050, availableAtMs: 5210 },
+    { midi: 60, onsetMs: 4950, availableAtMs: 5110 },
+  ];
+  const report = {
+    recordingId: "nearest", references, alignmentOffsetMs: 0, onsetEstimateLagMs: 160,
+    stateWeights: [1, 1, 1, 2, 2] as const,
+    comparisons: [{ configuration: "shipped" as const, predictions,
+      windows: [matchAttacks(references, predictions, 10)] }],
+  };
+  const queue = createAnnotationReviewQueue(
+    report as Parameters<typeof createAnnotationReviewQueue>[0], trace,
+  );
+  const at = (onsetMs: number) => queue.find((q) => q.reference?.onsetMs === onsetMs)!;
+  // +30 is nearer than -200; taking the lowest signed offset would report -200.
+  assert.equal(at(1000).nearestSamePitchMs, 30);
+  // -50 and +50 are equidistant and the later one is listed first.
+  assert.equal(at(5000).nearestSamePitchMs, -50);
 });

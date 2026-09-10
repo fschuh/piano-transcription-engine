@@ -464,6 +464,13 @@ Original release/channel metadata remains archived under the source, not silentl
 reinterpreted as corrected release timing. Additions have null original source.
 Queue ordering uses shared-readout count descending, then actual event time.
 
+`nearestSamePitchMs` and `nearestOtherPitchMs` give the signed distance from the
+entry's event to its closest opposite-side neighbour within the same 250 ms
+window the concern flags use, or null when there is none. Positive means the
+neighbour is later; equidistant neighbours report the earlier one. The concern
+flags say only that a neighbour exists, so these separate a window-boundary
+disagreement from a distant coincidence without opening the evidence file.
+
 Correction validation rejects repeated `(midi, onsetMs)` identities in the final
 assembled references, including collisions caused by replacements. Review entries
 are keyed by that identity, so two references sharing one collapse into a single

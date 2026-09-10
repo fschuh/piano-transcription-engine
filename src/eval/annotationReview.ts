@@ -130,6 +130,14 @@ export function createAnnotationReviewQueue(report: RecognitionReport, trace: On
         ...named(a), availableAtMs: a.availableAtMs, configuration: c.configuration,
       })));
     const opposite = side === "reference" ? nearbyPredictions : nearbyReferences;
+    // Signed distance to the closest opposite-side neighbour, so a reviewer can separate a
+    // window-boundary disagreement from a distant coincidence without opening the evidence
+    // file. Positive means the neighbour is later; ties prefer the earlier one.
+    const nearestMs = (wanted: (midi: number) => boolean) => {
+      const offsets = opposite.filter((a) => wanted(a.midi)).map((a) => a.onsetMs - event.onsetMs);
+      offsets.sort((a, b) => Math.abs(a) - Math.abs(b) || a - b);
+      return offsets.length ? offsets[0]! : null;
+    };
     const diagnostic = diagnoseRawAttacks(
       trace, [event], 100, report.stateWeights, report.onsetEstimateLagMs, true,
     )[0]!;
@@ -152,6 +160,8 @@ export function createAnnotationReviewQueue(report: RecognitionReport, trace: On
         ? "Nearby same-pitch event: possible annotation or detection timing error" : null,
       pitchConcern: opposite.some((a) => a.midi !== event.midi)
         ? "Nearby different-pitch event: possible pitch substitution on either side" : null,
+      nearestSamePitchMs: nearestMs((midi) => midi === event.midi),
+      nearestOtherPitchMs: nearestMs((midi) => midi !== event.midi),
       reference: side === "reference" ? named(event) : null,
       prediction: side === "prediction" ? named(event) : null,
       configurations,
