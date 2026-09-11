@@ -257,6 +257,34 @@ test("gold moments report complete and repeated chords through the experiment pa
   }
 });
 
+test("the held-out half is refused, whatever a caller asks for", async () => {
+  const root = await scriptedDirectory();
+  try {
+    const trace = await quietTrace(40);
+    const run = await runExperimentDecoder(trace, {
+      decoderId: "scripted",
+      configuration: { script: [] },
+      onsetEstimateLagMs: LAG,
+      directory: root,
+    });
+    const score = (recordingId: string) => evaluateExperimentRecording({
+      recordingId,
+      role: "development",
+      trace,
+      references: [],
+      protocol,
+      run,
+    });
+    assert.throws(() => score("silver/held-out"), /confirmation half/);
+    // The role a caller supplies is a label on the result; the protocol is what
+    // decides, so naming it development does not make it scoreable.
+    assert.equal(score(RECORDING).recordingId, RECORDING);
+    assert.equal(score("gold/take").recordingId, "gold/take");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("a delay distribution reports its tail, and an empty sample reports nothing", () => {
   assert.deepEqual(delayDistribution([]), {
     count: 0, meanMs: null, medianMs: null, p95Ms: null, maxMs: null,

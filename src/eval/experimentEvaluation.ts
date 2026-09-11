@@ -21,6 +21,7 @@
 import { midiPitchName } from "./annotationReview.js";
 import {
   alignmentOffsetMsFor,
+  evaluationRecordingRoleOf,
   scoringIntervalFor,
   type EvaluationProtocol,
 } from "./evaluationProtocol.js";
@@ -173,6 +174,16 @@ export function evaluateExperimentRecording(
   options: ExperimentRecordingOptions,
 ): ExperimentRecordingResult {
   const { recordingId, protocol, trace, run } = options;
+  // The held-out half is refused here rather than only upstream. A caller that
+  // reached it would not fail — it would produce a perfectly ordinary-looking
+  // result, and the number that makes the held-out half worth holding out would
+  // be gone with no trace that it had ever been spent.
+  if (evaluationRecordingRoleOf(protocol, recordingId) === "confirmation") {
+    throw new Error(
+      `${recordingId} is in the protocol's confirmation half. Experiments are scored on the gold ` +
+      "and development halves; the confirmation half is spent once, by the confirmation task.",
+    );
+  }
   const offset = alignmentOffsetMsFor(protocol, recordingId);
   const interval = scoringIntervalFor(protocol, recordingId, trace.inputDurationMs);
   const excluded = protocol.excludedIntervals.filter((region) => region.recordingId === recordingId);
