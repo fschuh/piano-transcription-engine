@@ -69,6 +69,17 @@ export interface OnlineAmtTraceModel {
   file: string;
   byteLength: number;
   sha256: string;
+  /**
+   * The per-state weighting the exported graph applies to its own scores.
+   *
+   * The canonical model multiplies the attack states by two before taking its
+   * argmax, and any later readout that wants a probability has to divide that
+   * back out. A trace captured from a re-weighted export is therefore not
+   * readable without knowing which weighting it carried, so the weighting is
+   * recorded with the trace. Absent means the canonical weighting: every trace
+   * written before this field existed was captured from that model.
+   */
+  stateWeights?: readonly number[];
 }
 
 export interface OnlineAmtTraceAudio {
@@ -146,7 +157,15 @@ export interface OnlineAmtTraceRequirements {
   chunkSize: number;
   inputGainDb: number;
   tailFlushSampleCount: number;
+  /** Weighting the caller intends to read the scores by; absent means canonical. */
+  stateWeights?: readonly number[];
 }
+
+/**
+ * The weighting the canonical exported model applies, stated where a trace is
+ * read rather than inferred from a missing field.
+ */
+const CANONICAL_STATE_WEIGHTS: readonly number[] = [1, 1, 1, 2, 2];
 
 const FRAME_TIME_MS_EXPRESSION = "(frameIndex + 1) * chunkSize / sampleRateHz * 1000";
 
@@ -355,6 +374,15 @@ export function onlineAmtTraceMismatches(
     "its tail flush",
     `${metadata.capture.tailFlushSampleCount} samples`,
     `${required.tailFlushSampleCount} samples`,
+  );
+  // A re-weighted export is a different model and would already fail the digest
+  // above. This comparison catches the other direction: a caller that means to
+  // read a trace by weights the capture did not apply would divide the wrong
+  // numbers out of every score, and its probabilities would be quietly wrong.
+  compare(
+    "its state weighting",
+    JSON.stringify(metadata.model.stateWeights ?? CANONICAL_STATE_WEIGHTS),
+    JSON.stringify(required.stateWeights ?? CANONICAL_STATE_WEIGHTS),
   );
   return mismatches;
 }

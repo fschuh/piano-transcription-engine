@@ -45,7 +45,7 @@ import {
   type EvaluationProtocol,
   type EvaluationRecordingRole,
 } from "./evaluationProtocol.js";
-import { captureOnlineAmtTrace } from "./onlineAmtCapture.js";
+import { captureOnlineAmtTrace, ONLINE_AMT_STATE_COUNT } from "./onlineAmtCapture.js";
 import { recordingIdOfAudioFile } from "./recordingCorpus.js";
 import { inventoryRecordingFiles } from "./recordingInventory.js";
 import {
@@ -70,6 +70,9 @@ function usage(): string {
     "  --traces <dir>      Directory the raw traces are cached in",
     "  --wasm <file>       ONNX Runtime WASM binary; this package does not resolve it",
     "  --model <file>      ONNX model (default: the packaged canonical model)",
+    "  --state-weights <a,b,c,d,e>  Per-state weighting the model applies. An",
+    "                      export sidecar beside the model is measured and wins;",
+    "                      this flag is for a model that has none.",
     "  --recording <id>    Capture only this recording; repeatable",
     "  --role <role>       Capture only gold, development, or confirmation; repeatable",
     "  --ffmpeg <path>     FFmpeg binary (default: ffmpeg)",
@@ -91,8 +94,49 @@ interface Options {
   roles: EvaluationRecordingRole[];
   ffmpegPath: string | undefined;
   engineRevision: string | undefined;
+  stateWeights: number[] | undefined;
   force: boolean;
   asJson: boolean;
+}
+
+/**
+ * Reads a weighting from the command line.
+ *
+ * The capture has to record which weighting the model applied, because a later
+ * readout divides it back out of every score. Five positive numbers or nothing:
+ * a partially specified weighting would be worse than none.
+ */
+function parseStateWeights(value: string, name: string): number[] {
+  const parsed = value.split(",").map((part) => Number(part.trim()));
+  if (parsed.length !== ONLINE_AMT_STATE_COUNT ||
+    parsed.some((weight) => !Number.isFinite(weight) || weight <= 0)) {
+    throw new Error(
+      `${name} must be ${ONLINE_AMT_STATE_COUNT} positive numbers separated by commas, received ` +
+      `${JSON.stringify(value)}`,
+    );
+  }
+  return parsed;
+}
+
+/**
+ * The weighting an export recorded about itself, when it left a sidecar.
+ *
+ * The exporter writes one beside the model it wrote, so the weighting is
+ * measured from the artifact rather than asserted on a command line that could
+ * name a different export's settings.
+ */
+async function sidecarStateWeights(modelPath: string): Promise<number[] | null> {
+  const text = await readFile(`${modelPath}.export.json`, "utf8").catch(() => null);
+  if (text === null) return null;
+  const document = JSON.parse(text) as { stateWeights?: unknown };
+  const weights = document.stateWeights;
+  if (!Array.isArray(weights) || weights.length !== ONLINE_AMT_STATE_COUNT ||
+    weights.some((weight) => typeof weight !== "number" || !Number.isFinite(weight) || weight <= 0)) {
+    throw new Error(
+      `${modelPath}.export.json does not record ${ONLINE_AMT_STATE_COUNT} positive state weights.`,
+    );
+  }
+  return weights as number[];
 }
 
 function parseOptions(args: readonly string[]): Options {
@@ -103,6 +147,7 @@ function parseOptions(args: readonly string[]): Options {
   let modelPath = PACKAGED_MODEL;
   let ffmpegPath: string | undefined;
   let engineRevision: string | undefined;
+  let stateWeights: number[] | undefined;
   const recordingIds: string[] = [];
   const roles: EvaluationRecordingRole[] = [];
   let force = false;
@@ -123,6 +168,9 @@ function parseOptions(args: readonly string[]): Options {
     else if (argument === "--model") modelPath = next((index += 1), argument);
     else if (argument === "--ffmpeg") ffmpegPath = next((index += 1), argument);
     else if (argument === "--engine-revision") engineRevision = next((index += 1), argument);
+    else if (argument === "--state-weights") {
+      stateWeights = parseStateWeights(next((index += 1), argument), argument);
+    }
     else if (argument === "--recording") recordingIds.push(next((index += 1), argument));
     else if (argument === "--role") {
       const role = next((index += 1), argument) as EvaluationRecordingRole;
@@ -155,6 +203,7 @@ function parseOptions(args: readonly string[]): Options {
     roles,
     ffmpegPath,
     engineRevision,
+    stateWeights,
     force,
     asJson,
   };
@@ -250,10 +299,20 @@ async function main(): Promise<void> {
   const recordingIds = selected(protocol, options);
 
   const modelData = new Uint8Array(await readFile(options.modelPath));
+  const recordedWeights = await sidecarStateWeights(options.modelPath);
+  if (recordedWeights !== null && options.stateWeights !== undefined &&
+    JSON.stringify(recordedWeights) !== JSON.stringify(options.stateWeights)) {
+    throw new Error(
+      `--state-weights named ${JSON.stringify(options.stateWeights)} but the export beside ` +
+      `${options.modelPath} recorded ${JSON.stringify(recordedWeights)}. The export is what ran.`,
+    );
+  }
+  const stateWeights = recordedWeights ?? options.stateWeights;
   const model = {
     file: basename(options.modelPath),
     byteLength: modelData.byteLength,
     sha256: createHash("sha256").update(modelData).digest("hex"),
+    ...(stateWeights === undefined ? {} : { stateWeights }),
   };
   const wasmBinary = new Uint8Array(await readFile(options.wasmPath));
   const converterVersion = await audioConverterVersion(options.ffmpegPath);
@@ -294,6 +353,7 @@ async function main(): Promise<void> {
         chunkSize: ONLINE_AMT_CHUNK_SIZE,
         inputGainDb: protocol.baseline.inputGainDb,
         tailFlushSampleCount: protocol.baseline.tailFlushSamples,
+        ...(stateWeights === undefined ? {} : { stateWeights }),
       };
       const restored = options.force
         ? null
@@ -375,6 +435,8 @@ async function main(): Promise<void> {
     `Traces: ${resolve(options.traceRoot)}`,
     `Engine: ${describeEngine(engine)}`,
     `Model: ${model.file}, ${model.byteLength} bytes, SHA-256 ${model.sha256.slice(0, 12)}…`,
+    `State weighting: ${stateWeights === undefined ? "canonical (1,1,1,2,2)" : stateWeights.join(", ")}` +
+    `${recordedWeights === null ? "" : " (read from the export sidecar)"}`,
     `Converter: ${converterVersion}`,
     `Baseline: ${protocol.baseline.inputGainDb} dB input gain, ` +
     `${protocol.baseline.tailFlushSamples}-sample tail flush`,

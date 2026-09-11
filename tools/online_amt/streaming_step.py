@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 import torch
@@ -9,6 +10,13 @@ from torch import nn
 CHUNK_SIZE = 512
 SILENCE_PATIENCE_FRAMES = 100
 SILENCE_THRESHOLD = 0.001
+
+# What the upstream transcriber does to its own five state scores before taking
+# an argmax: the two attack states count double. It is a decision rule, not a
+# learned parameter, so it can be changed without retraining — which is exactly
+# what makes it worth measuring. Everything downstream divides this back out to
+# recover probabilities, so an export that changes it has to say so.
+CANONICAL_STATE_WEIGHTS = (1.0, 1.0, 1.0, 2.0, 2.0)
 
 INPUT_NAMES = (
     "audio_chunk",
@@ -58,10 +66,23 @@ class OnlineAmtStreamingStep(nn.Module):
     reproducing the mel, CNN cache, or LSTM implementation in TypeScript.
     """
 
-    def __init__(self, model: nn.Module, initial_state: Sequence[torch.Tensor]):
+    def __init__(
+        self,
+        model: nn.Module,
+        initial_state: Sequence[torch.Tensor],
+        state_weights: Sequence[float] = CANONICAL_STATE_WEIGHTS,
+    ):
         super().__init__()
         if len(initial_state) != 8:
             raise ValueError("Expected eight state tensors")
+        weights = tuple(float(weight) for weight in state_weights)
+        if len(weights) != 5 or any(
+            not math.isfinite(weight) or weight <= 0 for weight in weights
+        ):
+            raise ValueError(
+                f"Expected five positive state weights, received {state_weights!r}",
+            )
+        self.state_weights = weights
         self.model = model.eval()
         (
             initial_audio,
@@ -86,8 +107,7 @@ class OnlineAmtStreamingStep(nn.Module):
         )
         self.register_buffer(
             "onset_weight",
-            torch.tensor([1.0, 1.0, 1.0, 2.0, 2.0], dtype=torch.float32)
-            .reshape(1, 1, 1, 5),
+            torch.tensor(weights, dtype=torch.float32).reshape(1, 1, 1, 5),
         )
 
     def initial_inputs(

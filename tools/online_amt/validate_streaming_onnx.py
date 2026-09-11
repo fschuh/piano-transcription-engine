@@ -12,8 +12,8 @@ import numpy as np
 import onnxruntime as ort
 import torch
 
-from export_streaming_onnx import build_streaming_step
-from streaming_step import INPUT_NAMES, OUTPUT_NAMES
+from export_streaming_onnx import build_streaming_step, state_weights
+from streaming_step import CANONICAL_STATE_WEIGHTS, INPUT_NAMES, OUTPUT_NAMES
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,6 +25,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--onnx", type=Path, required=True)
     parser.add_argument("--frames", type=int, default=180)
     parser.add_argument("--browser-fixture-dir", type=Path)
+    parser.add_argument(
+        "--state-weights",
+        type=state_weights,
+        default=CANONICAL_STATE_WEIGHTS,
+        help=(
+            "Weighting the ONNX file under test was exported with. Must match "
+            "the export, or the two sides are not the same model."
+        ),
+    )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Write the report JSON here as well as printing it.",
+    )
     return parser.parse_args()
 
 
@@ -202,7 +216,9 @@ def compare_reference_decoder(
 def main() -> None:
     args = parse_args()
     torch.set_num_threads(1)
-    step = build_streaming_step(args.source_root, args.checkpoint)
+    weights = tuple(float(weight) for weight in args.state_weights)
+    canonical = weights == tuple(CANONICAL_STATE_WEIGHTS)
+    step = build_streaming_step(args.source_root, args.checkpoint, weights)
     chunks = fixture_audio(args.frames)
     session = ort.InferenceSession(
         str(args.onnx.resolve()),
@@ -246,13 +262,29 @@ def main() -> None:
             )
 
     warmup = min(20, max(0, args.frames // 5))
+    # The upstream transcriber applies the canonical weighting when it picks its
+    # own state, so a re-weighted export is expected to choose differently. That
+    # comparison is the control's job and only the control's: running it against
+    # a changed export would turn the very thing being tested into a failure.
     report = {
         "frames": args.frames,
+        "stateWeights": list(weights),
+        "canonicalStateWeights": list(CANONICAL_STATE_WEIGHTS),
+        "isCanonicalExport": canonical,
         "referenceDecoderParity": compare_reference_decoder(
             args.source_root,
             args.checkpoint,
             step,
             chunks,
+        )
+        if canonical
+        else None,
+        "referenceDecoderParitySkipped": None
+        if canonical
+        else (
+            "The upstream decoder selects states under the canonical weighting, "
+            f"so it cannot be a parity reference for the {list(weights)} export. "
+            "Python and ONNX are still compared under the configured weighting."
         ),
         "parity": {
             "maxAbsoluteScoreError": max_score_error,
@@ -262,15 +294,24 @@ def main() -> None:
         "pytorchOneThread": latency_summary(torch_durations[warmup:]),
         "onnxRuntimeNativeCpu": latency_summary(onnx_durations[warmup:]),
     }
-    print(json.dumps(report, indent=2))
+    text = json.dumps(report, indent=2)
+    print(text)
+    if args.report:
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(text + "\n", encoding="utf-8")
     if (
-        any(report["referenceDecoderParity"].values())
+        any((report["referenceDecoderParity"] or {}).values())
         or state_mismatches
         or active_mismatches
         or max_score_error > 2e-4
     ):
         raise SystemExit("ONNX parity check failed")
     if args.browser_fixture_dir:
+        if not canonical:
+            raise SystemExit(
+                "Refusing to regenerate the browser fixture from a re-weighted "
+                "export; the fixture is the canonical model's.",
+            )
         write_browser_fixture(args.browser_fixture_dir, chunks, onnx_outputs)
 
 

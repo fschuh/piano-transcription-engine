@@ -369,3 +369,70 @@ export async function decodeAudioFileToPcm(
     conversion: { tool: ffmpegPath, version, arguments: recordedArgs },
   };
 }
+
+/** A stretch of audio verified to hold nothing, with how it was established. */
+export interface VerifiedSilentRegion {
+  startMs: number;
+  endMs: number;
+  basis: string;
+}
+
+export interface VerifiedDigitalSilenceOptions {
+  /** Shortest run of exact zeros worth reporting. */
+  minimumDurationMs?: number;
+  /** Trimmed from each edge, so a decay or an attack cannot fall inside. */
+  edgeTrimMs?: number;
+}
+
+/**
+ * Finds the runs of exact digital zero in decoded audio.
+ *
+ * This is the only quiet region this project treats as verified. A low level is
+ * not silence — it is a quiet passage, a room, or a decay, and a detection
+ * inside one may well be a note. A run of exact zeros is different: nothing was
+ * recorded there, so anything detected inside it is a false attack and can be
+ * counted as one without a listening pass.
+ *
+ * Both edges are trimmed, because the samples either side of a zero run belong
+ * to whatever decayed into it and whatever attacks out of it, and the model's
+ * mel window reaches across that boundary in both directions.
+ */
+export function verifiedDigitalSilence(
+  samples: Float32Array,
+  sampleRateHz: number,
+  options: VerifiedDigitalSilenceOptions = {},
+): VerifiedSilentRegion[] {
+  if (!Number.isFinite(sampleRateHz) || sampleRateHz <= 0) {
+    throw new Error(`A sample rate must be positive, received ${sampleRateHz}.`);
+  }
+  const minimumDurationMs = options.minimumDurationMs ?? 250;
+  const edgeTrimMs = options.edgeTrimMs ?? 120;
+  if (minimumDurationMs <= 2 * edgeTrimMs) {
+    throw new Error(
+      `A ${minimumDurationMs} ms minimum leaves nothing once ${edgeTrimMs} ms is trimmed from ` +
+      "each edge.",
+    );
+  }
+  const samplesPerMs = sampleRateHz / 1_000;
+  const minimumSamples = Math.ceil(minimumDurationMs * samplesPerMs);
+  const basis = `exact digital zero for at least ${minimumDurationMs} ms, ${edgeTrimMs} ms ` +
+    "trimmed from each edge";
+  const regions: VerifiedSilentRegion[] = [];
+  let start = -1;
+  for (let index = 0; index <= samples.length; index += 1) {
+    if (index < samples.length && samples[index] === 0) {
+      if (start < 0) start = index;
+      continue;
+    }
+    if (start < 0) continue;
+    if (index - start >= minimumSamples) {
+      regions.push({
+        startMs: start / samplesPerMs + edgeTrimMs,
+        endMs: index / samplesPerMs - edgeTrimMs,
+        basis,
+      });
+    }
+    start = -1;
+  }
+  return regions;
+}

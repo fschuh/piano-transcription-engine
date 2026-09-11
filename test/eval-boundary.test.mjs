@@ -41,18 +41,64 @@ const forbiddenEverywhere = [
 ];
 
 test("evaluation modules import only the public production entry and their siblings", async () => {
-  const paths = await sourceFiles("src/eval", [".ts"]);
+  const paths = (await sourceFiles("src/eval", [".ts"]))
+    .filter((path) => !path.startsWith("src/eval/experiments/"));
   assert.ok(paths.length > 0);
   for (const path of paths) {
     for (const specifier of await importsOf(path)) {
       const allowed = specifier === "../index.js" ||
         specifier.startsWith("node:") ||
-        /^\.\/[A-Za-z0-9]+\.js$/.test(specifier);
+        /^\.\/[A-Za-z0-9]+\.js$/.test(specifier) ||
+        // The candidate directory is the one subdirectory of the eval layer. The
+        // runner and the entry point reach into it; nothing else does.
+        /^\.\/experiments\/[A-Za-z0-9]+\.js$/.test(specifier);
       assert.ok(allowed, `${path} imports ${specifier}`);
       for (const forbidden of forbiddenEverywhere) {
         assert.equal(specifier.toLowerCase().includes(forbidden), false, `${path}: ${specifier}`);
       }
     }
+  }
+});
+
+/**
+ * Candidate decoders are written inside a research loop, so the narrow thing
+ * they are allowed to reach has to be enforced rather than described. A decoder
+ * sees its own frozen contract and the public production entry, and that is all:
+ * no evaluation module, so it cannot reach the reference, the protocol, the
+ * MIDI, or the scorer it is about to be measured by, and nothing from `node:`,
+ * so it cannot read a file, open a socket, or consult the clock.
+ */
+test("candidate decoders reach only their own contract and the production entry", async () => {
+  const paths = await sourceFiles("src/eval/experiments", [".ts"]);
+  assert.ok(paths.length > 0);
+  for (const path of paths) {
+    if (path.endsWith("types.ts")) {
+      assert.deepEqual(await importsOf(path), [], "the contract itself imports nothing");
+      continue;
+    }
+    for (const specifier of await importsOf(path)) {
+      assert.ok(
+        specifier === "../../index.js" || /^\.\/[A-Za-z0-9]+\.js$/.test(specifier),
+        `${path} imports ${specifier}; a candidate may reach only ./<sibling>.js and ../../index.js`,
+      );
+    }
+    const source = await readFile(join(repositoryRoot, path), "utf8");
+    for (const forbidden of ["process.", "fetch(", "require(", "node:", "import("]) {
+      assert.equal(source.includes(forbidden), false, `${path} uses ${forbidden}`);
+    }
+  }
+});
+
+test("every candidate module declares the id of the file it lives in", async () => {
+  for (const path of await sourceFiles("src/eval/experiments", [".ts"])) {
+    if (path.endsWith("types.ts")) continue;
+    const expected = path.slice(path.lastIndexOf("/") + 1, -".ts".length);
+    const source = await readFile(join(repositoryRoot, path), "utf8");
+    assert.match(
+      source,
+      new RegExp(`id:\\s*"${expected}"`),
+      `${path} must declare id: "${expected}" so one id names exactly one file`,
+    );
   }
 });
 
@@ -103,9 +149,11 @@ test("active tests use the eval entry point and no application or historical art
         );
       }
       if (!specifier.includes("/eval/")) continue;
+      // Tests may sit one directory deeper, so the number of steps up varies;
+      // the rule being enforced is that they stop at the entry point.
       assert.match(
         specifier,
-        /^\.\.\/(src|dist)\/eval\/index\.js$/,
+        /^(\.\.\/)+(src|dist)\/eval\/index\.js$/,
         `${path} reaches past the eval entry point with ${specifier}`,
       );
     }

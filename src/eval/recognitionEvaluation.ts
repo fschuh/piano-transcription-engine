@@ -142,6 +142,27 @@ export type StateWeights = readonly [number, number, number, number, number];
 
 export const BASELINE_STATE_WEIGHTS: StateWeights = [1, 1, 1, 2, 2];
 
+/**
+ * The weighting a trace should be read by, from whatever the trace recorded.
+ *
+ * A trace written before the field existed carries no weighting, and it was
+ * captured from the canonical export, so the canonical weighting is what it
+ * means. Anything else must be exactly five positive numbers: reading scores by
+ * a weighting the capture did not apply produces probabilities that are wrong
+ * without looking wrong.
+ */
+export function resolveStateWeights(recorded: readonly number[] | undefined): StateWeights {
+  if (recorded === undefined) return BASELINE_STATE_WEIGHTS;
+  if (recorded.length !== ONLINE_AMT_STATE_COUNT ||
+    recorded.some((weight) => typeof weight !== "number" || !Number.isFinite(weight) || weight <= 0)) {
+    throw new Error(
+      `A recorded state weighting must be ${ONLINE_AMT_STATE_COUNT} positive numbers, received ` +
+      `${JSON.stringify(recorded)}.`,
+    );
+  }
+  return [recorded[0]!, recorded[1]!, recorded[2]!, recorded[3]!, recorded[4]!];
+}
+
 export interface PitchScoreInspection {
   midi: number;
   /** Current selection is unavailable when the wrapper holds its previous state. */

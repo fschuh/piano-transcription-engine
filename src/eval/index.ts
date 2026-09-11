@@ -14,10 +14,13 @@ export {
   DEFAULT_FFMPEG_PATH,
   gainFactorFromDecibels,
   measureAudioLevel,
+  verifiedDigitalSilence,
   type AudioConversionCommand,
   type AudioLevelMeasurement,
   type DecodeAudioFileOptions,
   type DecodedPcmAudio,
+  type VerifiedDigitalSilenceOptions,
+  type VerifiedSilentRegion,
 } from "./audioDecoder.js";
 export {
   alignmentOffsetMsFor,
@@ -125,6 +128,7 @@ export {
 } from "./functionalFixtures.js";
 export {
   BASELINE_STATE_WEIGHTS,
+  resolveStateWeights,
   DEFAULT_ATTACK_READOUT,
   diagnoseRawAttacks,
   evaluateRecognitionRecording,
@@ -151,3 +155,46 @@ export {
   type AnnotationCorrection,
   type ReviewedAttack,
 } from "./annotationReview.js";
+
+// The experiment layer: one frozen contract a candidate algorithm implements, a
+// runner that holds it to that contract, and one frozen scoring path. A research
+// loop adds algorithms behind this boundary and changes nothing in front of it.
+export {
+  EXPERIMENT_STATE_NAMES,
+  experimentConfigurationError,
+  experimentNumber,
+  experimentOnlyKeys,
+  type ExperimentCandidateEvent,
+  type ExperimentDecoder,
+  type ExperimentDecoderCompletion,
+  type ExperimentDecoderContext,
+  type ExperimentDecoderModule,
+  type ExperimentFrame,
+  type ExperimentStateName,
+} from "./experiments/types.js";
+
+export {
+  assertExperimentDecoderId,
+  listExperimentDecoderIds,
+  loadExperimentDecoderModule,
+  runExperimentDecoder,
+  type ExperimentDecodedEvent,
+  type ExperimentDecoderRun,
+  type ExperimentDecoderRunOptions,
+} from "./experimentDecoders.js";
+
+export {
+  compareExperimentRecordings,
+  delayDistribution,
+  evaluateExperimentRecording,
+  EXPERIMENT_CHANGED_EVENT_FIELDS,
+  type DelayDistribution,
+  type ExperimentChangedEvent,
+  type ExperimentChangeKind,
+  type ExperimentComparison,
+  type ExperimentMechanismCounts,
+  type ExperimentRecordingOptions,
+  type ExperimentRecordingResult,
+  type ExperimentWindowResult,
+  type QuietRegion,
+} from "./experimentEvaluation.js";

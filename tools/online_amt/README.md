@@ -29,6 +29,42 @@ step with both the upstream PyTorch transcriber and native ONNX Runtime, then
 regenerates the public-safe 180-frame fixture when
 `--browser-fixture-dir` is supplied.
 
+## Re-weighted exports
+
+The graph multiplies its five state scores by a fixed weighting before taking an
+argmax, and the canonical export uses `1,1,1,2,2`: the two attack states count
+double. That is a decision rule rather than a learned parameter, so an experiment
+can change it without retraining. `--state-weights` does that, on both commands:
+
+```text
+python tools/online_amt/export_streaming_onnx.py \
+  --source-root ../online_amt \
+  --checkpoint ../online_amt/model-180000.pt \
+  --state-weights 1,1,1,1.5,2 \
+  --output /tmp/exports/onset-1.5/online_amt_streaming.onnx
+
+python tools/online_amt/validate_streaming_onnx.py \
+  --source-root ../online_amt \
+  --checkpoint ../online_amt/model-180000.pt \
+  --state-weights 1,1,1,1.5,2 \
+  --onnx /tmp/exports/onset-1.5/online_amt_streaming.onnx \
+  --report /tmp/exports/onset-1.5/validation.json
+```
+
+Never write a re-weighted export over `assets/models/`: the canonical model is
+what the package ships and what every earlier trace was captured from. Each
+export writes an `<output>.export.json` sidecar recording its weighting, its own
+digest, and the checkpoint it came from, and `piano-transcription-capture` reads
+that sidecar so the weighting a trace was captured under is measured from the
+artifact rather than asserted on a command line.
+
+Validation always compares PyTorch with ONNX Runtime under the configured
+weighting. The comparison against the upstream transcriber runs only for a
+canonical export, because the upstream decoder selects its states under the
+canonical weighting and would disagree with a re-weighted graph by design; the
+report says so rather than omitting the field. Regenerating the browser fixture
+from a re-weighted export is refused.
+
 The fixture audio is deterministic silence plus a synthesized, exponentially
 decaying 440 Hz harmonic signal. It contains no recording or copyrighted score
 material. Regenerating the fixture or canonical model is a reviewed model
