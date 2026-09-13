@@ -1,6 +1,13 @@
 /**
  * E02 — rearm gate for renewed-attack events on an already-sounding pitch.
  *
+ * The same module carries the E04 depth ladder: with the rearm frame held at
+ * one, the varied factor is the depth a pitch's minimum unweighted attack
+ * probability must reach since its previous attack (0.15 / 0.10 / 0.05); 0.15
+ * is E02-B's operating point and the deeper steps re-arm only after a real
+ * release. A parameter setting is configuration, so no second module is
+ * involved.
+ *
  * A model that is holding a note can flicker its attack state: it reports a
  * re-onset (or a fresh onset) on a pitch that is already sustaining, for a
  * single frame, with no release in between. Those are spurious re-onsets. A
